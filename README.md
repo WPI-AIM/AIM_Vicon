@@ -8,9 +8,24 @@
 A package to read in Vicon data for analysis. This package can be used to read in a CSV file generated from 
 the Vicon motion capture system
 
+
+## Dependence
+* python 2.7
+* numpy
+* matplotlib
+
+## External Dependence 
+All packages are installed in the `lib` folder
+
+* [AIM_GaitCore](https://github.com/WPI-AIM/AIM_GaitCore.git)
+
+
+
 ## IMPORTANT NOTE
 There is a strange bug when reading in the file. It will throw and error if you try to read in the raw file. 
 To solve this problem. Open up the CSV file in libreoffice or Excel and resave the file. Make sure its a CSV file. 
+
+
 
 
 ## Notes
