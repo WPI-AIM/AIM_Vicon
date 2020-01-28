@@ -1,4 +1,9 @@
-# Vicon
+# AIM_Vicon
+
+
+## Authors
+- [Nathaniel Goldfarb](https://github.com/nag92) (nagoldfarb@wpi.edu)
+
 
 A package to read in Vicon data for analysis. This package can be used to read in a CSV file generated from 
 the Vicon motion capture system
@@ -8,18 +13,20 @@ There is a strange bug when reading in the file. It will throw and error if you 
 To solve this problem. Open up the CSV file in libreoffice or Excel and resave the file. Make sure its a CSV file. 
 
 
-# Notes
+## Notes
 - subject prefix removed from marker name i.e (subject:RKNEE -> RKNEE)
 - New devices connected to the Vicon should extend the Device class
 
 ## Installation
 This package relays on a submodule that needs to be installed
 ```bash
-git clone https://github.com/nag92/Vicon.git
-cd Vicon
+git clone https://github.com/WPI-AIM/AIM_Vicon.git
+cd AIM_Vicon
 git submodule init
 git submodule update
 ```
+
+## Examples
 
 ### Playing the markers
 
