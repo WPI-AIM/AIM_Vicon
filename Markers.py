@@ -158,6 +158,18 @@ class Markers(object):
                 point = core.Point.Point(x_filt[inx], y_filt[inx], z_filt[inx])
                 self._filtered_markers[fixed_name].append(point)
 
+
+
+    def set_ground_plane(self, rigid_body, offset_height=14):
+
+        markers = self.get_rigid_body("marker_names")
+        fit, residual = fit_to_plane(markers)
+
+
+
+        pass
+
+
     def smart_sort(self, filter=True):
         """
         Gather all the frames and attempt to sort the markers into the rigid markers
