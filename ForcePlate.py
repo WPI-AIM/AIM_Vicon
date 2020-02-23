@@ -50,10 +50,11 @@ from lib.GaitCore.Core.Newton import Newton
 
 class ForcePlate(Devices.Devices):
 
-    def __init__(self, name, forces, moments):
+    def __init__(self, name, forces, moments, CoP):
         self.force = Point(forces["Fx"]["data"], forces["Fy"]["data"], forces["Fz"]["data"])
         self.moment = Point(moments["Mx"]["data"], moments["My"]["data"], moments["Mz"]["data"])
-        sensor = Newton(None, self.force, self.moment, None)
+        self.CoP = Point(CoP["Cx"]["data"], CoP["Cy"]["data"], CoP["Cz"]["data"])
+        sensor = Newton(self.CoP, self.force, self.moment, None)
         super(ForcePlate, self).__init__(name, sensor, "IMU")
 
     def get_forces(self):
@@ -71,3 +72,11 @@ class ForcePlate(Devices.Devices):
         :rtype: Point
         """
         return self._sensor.moment
+
+    def get_CoP(self):
+        """
+
+        :return: the CoP from the force plate
+        :rtype: Point
+        """
+        return self._sensor.angle
