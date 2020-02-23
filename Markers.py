@@ -158,6 +158,18 @@ class Markers(object):
                 point = core.Point.Point(x_filt[inx], y_filt[inx], z_filt[inx])
                 self._filtered_markers[fixed_name].append(point)
 
+
+
+    def set_ground_plane(self, rigid_body, offset_height=14):
+
+        markers = self.get_rigid_body("marker_names")
+        fit, residual = fit_to_plane(markers)
+
+
+
+        pass
+
+
     def smart_sort(self, filter=True):
         """
         Gather all the frames and attempt to sort the markers into the rigid markers
@@ -232,9 +244,9 @@ class Markers(object):
         :return:
         """
         for name, value in self._rigid_body.iteritems():
+            print name
             frames = []
             if name in bodies:
-
                 for ii in xrange(len(value[0])):
                         frames.append(cloud_to_cloud(bodies[name], [value[0][ii], value[1][ii], value[2][ii], value[3][ii]])[0])
                 self.add_frame(name, frames)
