@@ -69,7 +69,6 @@ class Vicon(object):
         self._make_IMUs()
         self._make_marker_trajs()
         self._make_model()
-        self._length = len(self.get_model_output().get_right_leg().hip.angle.x)
 
     def _find_number_of_frames(self, col):
         """
