@@ -69,7 +69,6 @@ class Vicon(object):
         self._make_IMUs()
         self._make_marker_trajs()
         self._make_model()
-        self._length = len(self.get_model_output().get_right_leg().hip.angle.x)
 
     def _find_number_of_frames(self, col):
         """
@@ -284,14 +283,15 @@ class Vicon(object):
             keys = self._filter_dict(sensors, 'Force_Plate')  # + ['Combined Moment'] + ['Combined CoP']
 
             if any("Force_Plate" in word for word in keys) :
-
                 self._force_plates[1] = ForcePlate.ForcePlate("Force_Plate_1",
                                                               sensors["Force_Plate__Force_1"],
-                                                              sensors["Force_Plate__Moment_1"])
+                                                              sensors["Force_Plate__Moment_1"],
+                                                              sensors["Force_Plate__CoP_1"])
 
                 self._force_plates[2] = ForcePlate.ForcePlate("Force_Plate_2",
                                                               sensors["Force_Plate__Force_2"],
-                                                              sensors["Force_Plate__Moment_2"])
+                                                              sensors["Force_Plate__Moment_2"],
+                                                              sensors["Force_Plate__CoP_2"])
             else:
                 print "No force plates"
         else:
@@ -499,5 +499,6 @@ class Vicon(object):
 
 
 if __name__ == '__main__':
-    file = "/home/nathaniel/gait_analysis_toolkit/Utilities/Walking01.csv"
+    file = "/home/nathaniel/AIM_GaitData/Gaiting_stairs/subject_08/subject_08_walking_01.csv"
     data = Vicon(file)
+
