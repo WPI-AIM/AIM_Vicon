@@ -244,7 +244,6 @@ class Markers(object):
         :return:
         """
         for name, value in self._rigid_body.iteritems():
-            print name
             frames = []
             if name in bodies:
                 for ii in xrange(len(value[0])):
