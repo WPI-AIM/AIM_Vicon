@@ -57,18 +57,26 @@ class ModelOutput(object):
 
         for side, joint in zip(("L", "R"), (left_joints, right_joints)):
             for output in self.joint_names:
-                angle = core.Point.Point(data[side + output + "Angles"]["X"]["data"],
-                                   data[side + output + "Angles"]["Y"]["data"],
-                                   data[side + output + "Angles"]["Z"]["data"])
-                force = core.Point.Point(data[side + output + "Force"]["X"]["data"],
-                                   data[side + output + "Force"]["Y"]["data"],
-                                   data[side + output + "Force"]["Z"]["data"])
-                moment = core.Point.Point(data[side + output + "Moment"]["X"]["data"],
-                                    data[side + output + "Moment"]["Y"]["data"],
-                                    data[side + output + "Moment"]["Z"]["data"])
-                power = core.Point.Point(data[side + output + "Power"]["X"]["data"],
-                                   data[side + output + "Power"]["Y"]["data"],
-                                   data[side + output + "Power"]["Z"]["data"])
+                angle = None
+                power = None
+                moment = None
+                force = None
+                if side + output + "Angles" in data.keys():
+                    angle = core.Point.Point(data[side + output + "Angles"]["X"]["data"],
+                                       data[side + output + "Angles"]["Y"]["data"],
+                                       data[side + output + "Angles"]["Z"]["data"])
+                if side + output + "Force" in data.keys():
+                    force = core.Point.Point(data[side + output + "Force"]["X"]["data"],
+                                       data[side + output + "Force"]["Y"]["data"],
+                                       data[side + output + "Force"]["Z"]["data"])
+                if side + output + "Moment" in data.keys():
+                    moment = core.Point.Point(data[side + output + "Moment"]["X"]["data"],
+                                        data[side + output + "Moment"]["Y"]["data"],
+                                        data[side + output + "Moment"]["Z"]["data"])
+                if side + output + "Power" in data.keys():
+                    power = core.Point.Point(data[side + output + "Power"]["X"]["data"],
+                                       data[side + output + "Power"]["Y"]["data"],
+                                       data[side + output + "Power"]["Z"]["data"])
 
                 joint[output] = Joint(angle, moment, power, force)
                 #joint[output] = core.Newton.Newton(angle, force, moment, power)
