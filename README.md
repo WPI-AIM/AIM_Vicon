@@ -13,6 +13,8 @@ the Vicon motion capture system
 * python 2.7
 * numpy
 * matplotlib
+* pandas
+* scipy
 
 ## External Dependence 
 All packages are installed in the `lib` folder
@@ -22,8 +24,8 @@ All packages are installed in the `lib` folder
 
 
 ## IMPORTANT NOTE
-There is a strange bug when reading in the file. It will throw and error if you try to read in the raw file. 
-To solve this problem. Open up the CSV file in libreoffice or Excel and resave the file. Make sure its a CSV file. 
+There is a strange bug when reading in the file. It will throw an error if you try to read in the raw file. 
+To solve this problem. Open up the CSV file in Libreoffice or Excel and resave the file. Make sure it's a CSV file. 
 
 
 
