@@ -50,10 +50,12 @@ import ForcePlate
 import IMU
 import ModelOutput
 import Markers
+import pandas
+import numpy as np
 
 class Vicon(object):
 
-    def __init__(self, file_path):
+    def __init__(self, file_path, verbose=False):
         self._file_path = file_path
         self.joint_names = ["Ankle", "Knee", "Hip"]
         self._number_of_frames = 0
@@ -62,7 +64,7 @@ class Vicon(object):
         self._force_plates = {}
         self._IMUs = {}
         self._accels = {}
-        self.data_dict = self.open_vicon_file(self._file_path)
+        self.data_dict = self.open_vicon_file(self._file_path, verbose)
         self._make_Accelerometers()
         self._make_EMGs()
         self._make_force_plates()
@@ -359,7 +361,7 @@ class Vicon(object):
         else:
             print "No Devices"
 
-    def open_vicon_file(self, file_path):
+    def open_vicon_file(self, file_path, verbose=False):
         """
         parses the Vicon sensor data into a dictionary
         :param file_path: file path
@@ -376,7 +378,7 @@ class Vicon(object):
         names, segs = self._seperate_csv_sections(raw_data)
 
         for index, output in enumerate(names):
-            data[output] = self._extract_values(raw_data, segs[index], segs[index + 1])
+            data[output] = self._extract_values(raw_data, segs[index], segs[index + 1], verbose)
 
         return data
 
@@ -449,7 +451,7 @@ class Vicon(object):
 
         return fixed_names
 
-    def _extract_values(self, raw_data, start, end):
+    def _extract_values(self, raw_data, start, end, verbose=False):
         indices = {}
         data = {}
         current_name = None
@@ -488,10 +490,25 @@ class Vicon(object):
                 for sub_key, sub_value in value.iteritems():
                     index = indices[(key, sub_key)]
                     if row[index] is '':
-                        val = 0
+                        val = np.nan
                     else:
                         val = float(row[index])
                     sub_value["data"].append(val)
+        for key, value in data.iteritems():  # For every subject in the data...
+            for sub_key, sub_value in value.iteritems():  # For each field under each subject...
+                #  If we have NaNs *and* the whole row isn't NaNs...
+                #  No interpolation method can do anything with an array of NaNs,
+                #  so this way we save ourselves a bit of computation
+                if True in np.isnan(sub_value["data"]) and False in np.isnan(sub_value["data"]):
+                    if verbose:
+                        print "Interpolating missing values in field " + sub_key + ", in subject " + key + "..."
+                    s = pandas.Series(sub_value["data"])
+                    #  Akima interpolation only covers interior NaNs,
+                    #  and splines are *way* too imprecise with unset boundary conditions,
+                    #  so linear interpolation is used for unset values at the edges
+                    s = s.interpolate(method='akima', limit_direction='both')
+                    s = s.interpolate(method='linear', limit_direction='both')
+                    sub_value["data"] = s.to_list()
 
         return data
 
