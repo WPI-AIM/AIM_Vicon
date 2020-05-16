@@ -292,7 +292,8 @@ class Vicon(object):
         """
         if "Model Outputs" in self.data_dict:
             self._model_output = ModelOutput.ModelOutput(self.data_dict["Model Outputs"], self.joint_names)
-            print "Model Outputs generated"
+            if verbose:
+                print "Model Outputs generated"
         elif verbose:
             print "No Model outputs"
 
