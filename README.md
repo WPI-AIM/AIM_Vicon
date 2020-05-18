@@ -6,7 +6,7 @@
 
 
 A package to read in Vicon data for analysis. This package can be used to read in a CSV file generated from 
-the Vicon motion capture system
+the Vicon motion capture system. It will automatically attempt to interpolate missing data, and can save data back to a csv.
 
 
 ## Dependence
@@ -42,6 +42,31 @@ cd AIM_Vicon
 git submodule init
 git submodule update
 ```
+
+##Usage
+
+### Reading Data
+Vicon automatically reads data from the provided file when constructed.
+The constructor accepts two flags: ``verbose`` (defaults to ``False``) and ``interpolate`` (defaults to ``True``).
+
+If ``verbose`` is set to ``True``, it will print status updates and warnings while reading data. 
+
+If ``interpolate`` is set to ``True``, it will attempt to interpolate missing data points. If ``interpolate`` is set to 
+``False``, or if a field cannot be interpolated, missing data points will be set to ``np.nan``.
+
+### Saving Data
+The ``Vicon.save()`` method will save the data previously read.
+It accepts three flags: ``filename``, which defaults to ``None``, ``verbose``, which defaults to ``False``, and
+``mark_interpolated``, which defaults to ``True``.
+
+If ``filename`` is not provided, it will default to the file path specified on construction. ***WARNING: Saving to a
+file will overwrite it.***
+
+``verbose`` controls whether or not the save method will print status updates and warnings.
+
+If ``mark_interpolated`` is set to ``True``, any values that were generated through interpolation will be preceded by '!'.
+Vicon is able to read this, and a future Vicon object reading this value will display a warning with ``verbose`` set to ``True``.
+
 
 ## Examples
 
