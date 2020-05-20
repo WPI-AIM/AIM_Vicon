@@ -56,7 +56,7 @@ import numpy as np
 
 class Vicon(object):
 
-    def __init__(self, file_path, verbose=False):
+    def __init__(self, file_path, verbose=False, interpolate=True):
         self._file_path = file_path
         self.joint_names = ["Ankle", "Knee", "Hip"]
         self._number_of_frames = 0
@@ -86,7 +86,7 @@ class Vicon(object):
 
         self._nan_dict = {}
 
-        self.data_dict = self.open_vicon_file(self._file_path, verbose=verbose)
+        self.data_dict = self.open_vicon_file(self._file_path, verbose=verbose, interpolate=interpolate)
         self._make_Accelerometers(verbose=verbose)
         self._make_EMGs(verbose=verbose)
         self._make_force_plates(verbose=verbose)
