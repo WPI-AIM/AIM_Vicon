@@ -139,7 +139,10 @@ class Markers(object):
             self._filtered_markers[fixed_name] = []
 
             # This removes some of the values that are not very useful
-            if value_name.keys()[0] == "Magnitude( X )" or value_name.keys()[0] == "Count":
+            # if value_name.keys()[0] == "Magnitude( X )" or value_name.keys()[0] == "Count":
+            #     continue
+
+            if "Magnitude( X )" in  value_name.keys()or "Count" in value_name.keys():
                 continue
 
             x_arr = value_name["X"]["data"]
@@ -152,7 +155,7 @@ class Markers(object):
             z_filt = np.convolve(z_arr, np.ones((self._filter_window,)) / self._filter_window, mode='valid')
 
             # save a copy of both the unfiltered and fitlered markers
-            for inx in xrange(len(x_filt)):
+            for inx in range(len(x_filt)):
                 point = core.Point.Point(x_arr[inx], y_arr[inx], z_arr[inx])
                 self._raw_markers[fixed_name].append(point)
                 point = core.Point.Point(x_filt[inx], y_filt[inx], z_filt[inx])
