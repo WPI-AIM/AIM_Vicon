@@ -44,14 +44,15 @@
 # //==============================================================================
 import sys
 import csv
+from typing import List, Any
+
 import pandas
 import numpy as np
-
-from . import Markers
 from . import Accel
 from . import ForcePlate
-from . import  ModelOutput
+from . import ModelOutput
 from . import EMG
+from . import Markers
 
 class Vicon(object):
 
@@ -419,10 +420,10 @@ class Vicon(object):
         """"""
 
         raw_col = [row[0] for row in all_data]
-        fitlered_col = [item for item in raw_col if not item.isdigit()]
-        fitlered_col = filter(lambda a: a != 'Frame', fitlered_col)
-        fitlered_col = filter(lambda a: a != "", fitlered_col)
-
+        fitlered_col: List[Any] = [item for item in raw_col if not item.isdigit()]
+        fitlered_col = filter(lambda a: a != 'Frame', list(fitlered_col))
+        fitlered_col = filter(lambda a: a != "", list(fitlered_col))
+        fitlered_col = list(fitlered_col)
         if 'Devices' in fitlered_col:
             fitlered_col = fitlered_col[fitlered_col.index("Devices"):]
 
@@ -495,7 +496,7 @@ class Vicon(object):
         # column_names = raw_data[start + 2]
         remove_numbers = lambda str: ''.join([i for i in str if not i.isdigit()])
 
-        axis = map(remove_numbers, raw_data[start + 3])
+        axis = list(map(remove_numbers, raw_data[start + 3]))
         unit = raw_data[start + 4]
 
         # Build the dict to store everything
@@ -520,8 +521,9 @@ class Vicon(object):
         for row in raw_data[start + 5:end - 1]:
 
             frame = int(row[0])
-            for key, value in data.iteritems():
-                for sub_key, sub_value in value.iteritems():
+
+            for key, value in data.items():
+                for sub_key, sub_value in value.items():
                     index = indices[(key, sub_key)]
                     if row[index] is '' or str(row[index]).lower() == "nan":
                         val = np.nan
@@ -534,8 +536,8 @@ class Vicon(object):
                     else:
                         val = float(row[index])
                     sub_value["data"].append(val)
-        for key, value in data.iteritems():  # For every subject in the data...
-            for sub_key, sub_value in value.iteritems():  # For each field under each subject...
+        for key, value in data.items():  # For every subject in the data...
+            for sub_key, sub_value in value.items():  # For each field under each subject...
                 #  If we have NaNs and the whole row isn't NaNs...
                 #  No interpolation method can do anything with an array of NaNs,
                 #  so this way we save ourselves a bit of computation

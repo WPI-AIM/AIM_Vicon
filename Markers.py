@@ -132,7 +132,7 @@ class Markers(object):
         for rr in to_remove:
             self._data_dict.pop(rr, None)
 
-        for key_name, value_name in self._data_dict.iteritems():
+        for key_name, value_name in self._data_dict.items():
             fixed_name = key_name[1 + key_name.find(":"):]
             self._marker_names.append(fixed_name)
             self._raw_markers[fixed_name] = []
