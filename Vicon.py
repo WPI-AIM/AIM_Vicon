@@ -42,17 +42,17 @@
 #     \version   0.1
 # */
 # //==============================================================================
-
+import sys
 import csv
-import Accel
-import EMG
-import ForcePlate
-import IMU
-import ModelOutput
-import Markers
+from typing import List, Any
+
 import pandas
 import numpy as np
-
+from . import Accel
+from . import ForcePlate
+from . import ModelOutput
+from . import EMG
+from . import Markers
 
 class Vicon(object):
 
@@ -292,9 +292,9 @@ class Vicon(object):
         if "Model Outputs" in self.data_dict:
             self._model_output = ModelOutput.ModelOutput(self.data_dict["Model Outputs"], self.joint_names)
             if verbose:
-                print "Model Outputs generated"
+                print("Model Outputs generated")
         elif verbose:
-            print "No Model outputs"
+            print("No Model outputs")
 
     def _make_force_plates(self, verbose=False):
         """
@@ -317,11 +317,11 @@ class Vicon(object):
                                                               sensors["Force_Plate__Moment_2"],
                                                               sensors["Force_Plate__CoP_2"])
                 if verbose:
-                    print "Force plate models generated"
+                    print("Force plate models generated")
             elif verbose:
-                print "No force plates"
+                print("No force plates")
         elif verbose:
-            print "A scan for force plates found no Devices"
+            print("A scan for force plates found no Devices")
 
     def _make_markers(self):
         markers = self.data_dict["Trajectories"]
@@ -341,11 +341,11 @@ class Vicon(object):
                     self._T_EMGs[int(filter(str.isdigit, t_key))] = EMG.EMG(t_key, sensors[t_key]["EMG"])
                     self._EMGs[int(filter(str.isdigit, e_key))] = EMG.EMG(e_key, sensors[e_key]["IM EMG"])
                 if verbose:
-                    print "EMG models generated"
+                    print("EMG models generated")
             elif verbose:
-                print "No EMGs"
+                print("No EMGs")
         elif verbose:
-            print "A scan for EMGs found no Devices"
+            print("A scan for EMGs found no Devices")
 
     def _make_IMUs(self, verbose=False):
         """
@@ -359,11 +359,11 @@ class Vicon(object):
                 for key in keys:
                     self._IMUs[int(filter(str.isdigit, key))] = IMU.IMU(key, sensors[key])
                 if verbose:
-                    print "IMU models Generated"
+                    print( "IMU models Generated")
             elif verbose:
-                print "No IMUs"
+                print ("No IMUs")
         elif verbose:
-            print "A scan for IMUs found no Devices"
+            print( "A scan for IMUs found no Devices")
 
     def _make_marker_trajs(self):
         """
@@ -385,11 +385,11 @@ class Vicon(object):
                 for key in keys:
                     self._accels[int(filter(str.isdigit, key))] = Accel.Accel(key, sensors[key])
                 if verbose:
-                    print "Accel models generated"
+                    print( "Accel models generated")
             elif verbose:
-                print "No Accels"
+                print ("No Accels")
         elif verbose:
-            print "A scan for Accels found no Devices"
+            print ("A scan for Accels found no Devices")
 
     def open_vicon_file(self, file_path, verbose=False, interpolate=True):
         """
@@ -401,7 +401,7 @@ class Vicon(object):
         """
         # open the file and get the column names, axis, and units
         if verbose:
-            print "Reading data from file " + file_path
+            print( "Reading data from file " + file_path)
         with open(file_path, mode='r') as csv_file:
             reader = csv.reader(csv_file)
             raw_data = list(reader)
@@ -420,10 +420,10 @@ class Vicon(object):
         """"""
 
         raw_col = [row[0] for row in all_data]
-        fitlered_col = [item for item in raw_col if not item.isdigit()]
-        fitlered_col = filter(lambda a: a != 'Frame', fitlered_col)
-        fitlered_col = filter(lambda a: a != "", fitlered_col)
-
+        fitlered_col: List[Any] = [item for item in raw_col if not item.isdigit()]
+        fitlered_col = filter(lambda a: a != 'Frame', list(fitlered_col))
+        fitlered_col = filter(lambda a: a != "", list(fitlered_col))
+        fitlered_col = list(fitlered_col)
         if 'Devices' in fitlered_col:
             fitlered_col = fitlered_col[fitlered_col.index("Devices"):]
 
@@ -496,7 +496,7 @@ class Vicon(object):
         # column_names = raw_data[start + 2]
         remove_numbers = lambda str: ''.join([i for i in str if not i.isdigit()])
 
-        axis = map(remove_numbers, raw_data[start + 3])
+        axis = list(map(remove_numbers, raw_data[start + 3]))
         unit = raw_data[start + 4]
 
         # Build the dict to store everything
@@ -521,22 +521,23 @@ class Vicon(object):
         for row in raw_data[start + 5:end - 1]:
 
             frame = int(row[0])
-            for key, value in data.iteritems():
-                for sub_key, sub_value in value.iteritems():
+
+            for key, value in data.items():
+                for sub_key, sub_value in value.items():
                     index = indices[(key, sub_key)]
                     if row[index] is '' or str(row[index]).lower() == "nan":
                         val = np.nan
                     elif '!' in row[index]:
                         val = float(row[index][1:])
                         if verbose and (key, sub_key) not in flags:
-                            print "Reading previously interpolated data in category " + category + \
-                                  ", subject " + key + ", field " + sub_key + "."
+                            print("Reading previously interpolated data in category " + category + \
+                                  ", subject " + key + ", field " + sub_key + ".")
                             flags.append((key, sub_key))
                     else:
                         val = float(row[index])
                     sub_value["data"].append(val)
-        for key, value in data.iteritems():  # For every subject in the data...
-            for sub_key, sub_value in value.iteritems():  # For each field under each subject...
+        for key, value in data.items():  # For every subject in the data...
+            for sub_key, sub_value in value.items():  # For each field under each subject...
                 #  If we have NaNs and the whole row isn't NaNs...
                 #  No interpolation method can do anything with an array of NaNs,
                 #  so this way we save ourselves a bit of computation
@@ -548,8 +549,8 @@ class Vicon(object):
                         self._nan_dict[category][key] = {}
                     self._nan_dict[category][key][sub_key] = nans
                     if verbose:
-                        print "Interpolating missing values in field " + sub_key + ", in subject " + key + \
-                              ", in category " + category + "..."
+                        print ("Interpolating missing values in field " + sub_key + ", in subject " + key + \
+                              ", in category " + category + "...")
                     s = pandas.Series(sub_value["data"])
                     #  Akima interpolation only covers interior NaNs,
                     #  and splines are *way* too imprecise with unset boundary conditions,
@@ -582,16 +583,16 @@ class Vicon(object):
         if filename is not None:
             file_path = filename
         if verbose and mark_interpolated:
-            print "Saving data to " + file_path + ". Interpolated values will be marked with '!'."
+            print ("Saving data to " + file_path + ". Interpolated values will be marked with '!'.")
         if verbose and not mark_interpolated:
-            print "Saving data to " + file_path + ". Interpolated values will not be marked."
+            print( "Saving data to " + file_path + ". Interpolated values will not be marked.")
         with open(file_path, "wb") as f:
             f.seek(0)
             f.truncate()
             writer = csv.writer(f)
             for category, subjects in self.data_dict.iteritems():  # for every category in the data...
                 if verbose:
-                    print "Saving category " + category + "..."
+                    print ("Saving category " + category + "...")
                 #  write the header
                 writer.writerow([category])
                 if category == "Devices":
@@ -641,7 +642,7 @@ class Vicon(object):
                     writer.writerow(line)
                 writer.writerow(["", ""])
         if verbose:
-            print "Saved!"
+            print ("Saved!")
 
     def __eq__(self, other):
         return isinstance(other, Vicon) and self.data_dict == other.data_dict
@@ -651,42 +652,42 @@ class Vicon(object):
         Method to help find differences between different Vicon objects.
         """
         if not isinstance(other, Vicon):
-            print "Not Vicon!"
+            print( "Not Vicon!")
             return
-        print "Scanning data for differences..."
+        print ("Scanning data for differences...")
         flag = False
         for category, subjects in self.data_dict.iteritems():
             if category not in other.data_dict:
-                print "Category " + category + " missing!"
+                print ("Category " + category + " missing!")
                 flag = True
             for subject, fields in subjects.iteritems():
                 if subject not in other.data_dict[category]:
-                    print "Subject " + subject + " in category " + category + " missing!"
+                    print ("Subject " + subject + " in category " + category + " missing!")
                     flag = True
                 for field, f_vals in fields.iteritems():
                     if field not in other.data_dict[category][subject]:
                         flag = True
-                        print "Field " + field + " of subject " + subject + " in category " + category + " missing!"
+                        print ("Field " + field + " of subject " + subject + " in category " + category + " missing!")
                     elif len(f_vals["data"]) != len(other.data_dict[category][subject][field]["data"]):
                         flag = True
-                        print "Data length mismatch in field " + field \
-                              + " of subject " + subject + " in category " + category + "!"
+                        print ("Data length mismatch in field " + field \
+                              + " of subject " + subject + " in category " + category + "!")
                     elif set(f_vals["data"]) != set(other.data_dict[category][subject][field]["data"]):
                         flag = True
-                        print "Data mismatch in field " + field \
-                              + " of subject " + subject + " in category " + category + "!"
+                        print ("Data mismatch in field " + field \
+                              + " of subject " + subject + " in category " + category + "!")
                     elif f_vals["data"] != other.data_dict[category][subject][field]["data"]:
                         flag = True
-                        print "Data order mismatch in field " + field \
-                              + " of subject " + subject + " in category " + category + "!"
+                        print ("Data order mismatch in field " + field \
+                              + " of subject " + subject + " in category " + category + "!")
 
                     if field in other.data_dict[category][subject] and f_vals["unit"] != \
                             other.data_dict[category][subject][field]["unit"]:
                         flag = True
-                        print "Unit mismatch in field " + field \
-                              + " of subject " + subject + " in category " + category + "!"
+                        print ("Unit mismatch in field " + field \
+                              + " of subject " + subject + " in category " + category + "!")
         if not flag:
-            print "No differences detected!"
+            print ("No differences detected!")
 
 
 if __name__ == '__main__':
