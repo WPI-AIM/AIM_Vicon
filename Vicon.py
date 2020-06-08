@@ -555,7 +555,13 @@ class Vicon(object):
                     #  Akima interpolation only covers interior NaNs,
                     #  and splines are *way* too imprecise with unset boundary conditions,
                     #  so linear interpolation is used for unset values at the edges
-                    s = s.interpolate(method='akima', limit_direction='both')
+                    try:
+                        s = s.interpolate(method='akima', limit_direction='both')
+                    except ValueError:
+                        if verbose:
+                            print "Akima Interpolation failed for field " + sub_key + ", in subject " + key + \
+                                  ", in category " + category + "!"
+                            print "Falling back to linear interpolation..."
                     s = s.interpolate(method='linear', limit_direction='both')
                     sub_value["data"] = s.to_list()
                 else:
