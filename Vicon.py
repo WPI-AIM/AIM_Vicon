@@ -525,7 +525,7 @@ class Vicon(object):
             for key, value in data.items():
                 for sub_key, sub_value in value.items():
                     index = indices[(key, sub_key)]
-                    if row[index] is '' or str(row[index]).lower() == "nan":
+                    if row[index] == '' or str(row[index]).lower() == "nan":
                         val = np.nan
                     elif '!' in row[index]:
                         val = float(row[index][1:])
@@ -559,9 +559,9 @@ class Vicon(object):
                         s = s.interpolate(method='akima', limit_direction='both')
                     except ValueError:
                         if verbose:
-                            print "Akima Interpolation failed for field " + sub_key + ", in subject " + key + \
-                                  ", in category " + category + "!"
-                            print "Falling back to linear interpolation..."
+                            print ("Akima Interpolation failed for field " + sub_key + ", in subject " + key + \
+                                  ", in category " + category + "!")
+                            print ("Falling back to linear interpolation...")
                     s = s.interpolate(method='linear', limit_direction='both')
                     sub_value["data"] = s.to_list()
                 else:
