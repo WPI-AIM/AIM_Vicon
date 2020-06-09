@@ -48,13 +48,12 @@ from typing import List, Any
 
 import pandas
 import numpy as np
-
-import IMU
 import Accel
 import ForcePlate
 import ModelOutput
 import EMG
 import Markers
+import IMU
 
 class Vicon(object):
 
@@ -421,7 +420,14 @@ class Vicon(object):
     def _seperate_csv_sections(self, all_data):
         """"""
 
-        raw_col = [row[0] for row in all_data]
+        raw_col = []
+
+        for row in all_data:
+            if len(row) > 0:
+                raw_col.append(row[0])
+            else:
+                raw_col.append("")
+
         fitlered_col: List[Any] = [item for item in raw_col if not item.isdigit()]
         fitlered_col = filter(lambda a: a != 'Frame', list(fitlered_col))
         fitlered_col = filter(lambda a: a != "", list(fitlered_col))
@@ -503,8 +509,7 @@ class Vicon(object):
 
         # Build the dict to store everything
         for index, name in enumerate(column_names):
-
-            if index <= 1:
+            if index <= 1 or index >= len(axis):
                 continue
             else:
                 if len(name) > 0:
