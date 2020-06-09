@@ -43,7 +43,7 @@
 # */
 # //==============================================================================
 
-from . import Devices
+import Devices
 from lib.GaitCore.Core.Point import Point
 
 

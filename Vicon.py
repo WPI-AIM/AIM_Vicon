@@ -48,15 +48,17 @@ from typing import List, Any
 
 import pandas
 import numpy as np
-from . import Accel
-from . import ForcePlate
-from . import ModelOutput
-from . import EMG
-from . import Markers
+
+import IMU
+import Accel
+import ForcePlate
+import ModelOutput
+import EMG
+import Markers
 
 class Vicon(object):
 
-    def __init__(self, file_path, verbose=False, interpolate=True):
+    def __init__(self, file_path, verbose=False, interpolate=True, maxnanstotal=-1, maxnansrow=-1):
         self._file_path = file_path
         self.joint_names = ["Ankle", "Knee", "Hip"]
         self._number_of_frames = 0
@@ -86,7 +88,7 @@ class Vicon(object):
 
         self._nan_dict = {}
 
-        self.data_dict = self.open_vicon_file(self._file_path, verbose=verbose, interpolate=interpolate)
+        self.data_dict = self.open_vicon_file(self._file_path, verbose=verbose, interpolate=interpolate, maxnanstotal=maxnanstotal, maxnansrow=maxnansrow)
         self._make_Accelerometers(verbose=verbose)
         self._make_EMGs(verbose=verbose)
         self._make_force_plates(verbose=verbose)
@@ -391,7 +393,7 @@ class Vicon(object):
         elif verbose:
             print ("A scan for Accels found no Devices")
 
-    def open_vicon_file(self, file_path, verbose=False, interpolate=True):
+    def open_vicon_file(self, file_path, verbose=False, interpolate=True, maxnanstotal=-1, maxnansrow=-1):
         """
         parses the Vicon sensor data into a dictionary
         :param file_path: file path
@@ -412,7 +414,7 @@ class Vicon(object):
 
         for index, output in enumerate(names):
             data[output] = self._extract_values(raw_data, segs[index], segs[index + 1], verbose=verbose,
-                                                category=output, interpolate=interpolate)
+                                                category=output, interpolate=interpolate, maxnanstotal=maxnanstotal, maxnansrow=maxnansrow)
 
         return data
 
@@ -485,7 +487,7 @@ class Vicon(object):
 
         return fixed_names
 
-    def _extract_values(self, raw_data, start, end, verbose=False, category="", interpolate=True):
+    def _extract_values(self, raw_data, start, end, verbose=False, category="", interpolate=True, maxnanstotal=-1, maxnansrow=-1):
         indices = {}
         data = {}
         current_name = None
@@ -518,31 +520,84 @@ class Vicon(object):
         # Put all the data in the correct sub dictionary.
 
         flags = []
+
+        # naninfo contains information on the total nans and max nans in a row within each field within each subject
+        # naninfo[subject][field] exists for each subject and field that exists within the current category
+        # naninfo[subject][field] is a dictionary which contains the keys "total", "row", "rowtemp", and "interpolate"
+        # naninfo[subject][field]["total"] is the total number of nans detected within that field
+        # naninfo[subject][field]["row"] is the highest number of nans in a row detected within that field
+        # naninfo[subject][field]["rowtemp"] is used to calculate the "row" field and contains no useful data
+        # naninfo[subject][field]["interpolate"] is a boolean value that determines if that field can be interpolated
+        # according to the rules set by the user
+        naninfo = {}
         for row in raw_data[start + 5:end - 1]:
 
             frame = int(row[0])
 
             for key, value in data.items():
+                if key not in naninfo:
+                    naninfo[key] = {}
                 for sub_key, sub_value in value.items():
+                    if sub_key not in naninfo[key]:
+                        naninfo[key][sub_key] = {"total": 0, "row": 0, "rowtemp": 0}
                     index = indices[(key, sub_key)]
                     if row[index] == '' or str(row[index]).lower() == "nan":
                         val = np.nan
+                        naninfo[key][sub_key]["total"] += 1
+                        naninfo[key][sub_key]["rowtemp"] += 1
                     elif '!' in row[index]:
+                        if naninfo[key][sub_key]["rowtemp"] > naninfo[key][sub_key]["row"]:
+                            naninfo[key][sub_key]["row"] = naninfo[key][sub_key]["rowtemp"]
+                        naninfo[key][sub_key]["rowtemp"] = 0
                         val = float(row[index][1:])
                         if verbose and (key, sub_key) not in flags:
                             print("Reading previously interpolated data in category " + category + \
                                   ", subject " + key + ", field " + sub_key + ".")
                             flags.append((key, sub_key))
                     else:
+                        if naninfo[key][sub_key]["rowtemp"] > naninfo[key][sub_key]["row"]:
+                            naninfo[key][sub_key]["row"] = naninfo[key][sub_key]["rowtemp"]
+                        naninfo[key][sub_key]["rowtemp"] = 0
                         val = float(row[index])
                     sub_value["data"].append(val)
+
+        for subject, fields in naninfo.items():
+            for field, info in fields.items():
+                if info["rowtemp"] > info["row"]:
+                    # In fields where the last value is nan, the above loop doesn't properly set info["row"]
+                    info["row"] = info["rowtemp"]
+                if -1 < maxnanstotal < info["total"]:
+                    info["interpolate"] = False
+                    if verbose:
+                        if field == "":
+                            print("Field [Blank Name] in subject " + subject + " has " + str(info["total"]) +
+                                  " nans, which violates the max nans rule of " + str(maxnanstotal) + " nans. [Blank " +
+                                  " Name] will not be interpolated!")
+                        else:
+                            print("Field " + field + " in subject " + subject + " has " + str(info["total"]) +
+                                  " nans, which violates the max nans rule of " + str(maxnanstotal) + " nans. " +
+                                  field + " will not be interpolated!")
+                elif -1 < maxnansrow < info["row"]:
+                    info["interpolate"] = False
+                    if verbose:
+                        if field == "":
+                            print("Field [Blank Name] in subject " + subject + " has " + str(info["row"]) +
+                                  " nans in a row, which violates the max nans in a row rule of " +
+                                  str(maxnansrow) + " nans in a row. [Blank Name] will not be interpolated!")
+                        else:
+                            print("Field " + field + " in subject " + subject + " has " + str(info["row"]) +
+                                  " nans in a row, which violates the max nans in a row rule of " +
+                                  str(maxnansrow) + " nans in a row. " + field + " will not be interpolated!")
+                else:
+                    info["interpolate"] = True
+
         for key, value in data.items():  # For every subject in the data...
             for sub_key, sub_value in value.items():  # For each field under each subject...
                 #  If we have NaNs and the whole row isn't NaNs...
                 #  No interpolation method can do anything with an array of NaNs,
                 #  so this way we save ourselves a bit of computation
                 nans = np.isnan(sub_value["data"])
-                if True in nans and False in nans and interpolate:
+                if True in nans and False in nans and interpolate and naninfo[key][sub_key]["interpolate"]:
                     if category not in self._nan_dict:
                         self._nan_dict[category] = {}
                     if key not in self._nan_dict[category]:
