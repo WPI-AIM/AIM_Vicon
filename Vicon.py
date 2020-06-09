@@ -509,8 +509,7 @@ class Vicon(object):
 
         # Build the dict to store everything
         for index, name in enumerate(column_names):
-
-            if index <= 1:
+            if index <= 1 or index >= len(axis):
                 continue
             else:
                 if len(name) > 0:
