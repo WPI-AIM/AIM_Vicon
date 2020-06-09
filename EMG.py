@@ -43,7 +43,7 @@
 # */
 # //==============================================================================
 
-from . import Devices
+import Devices
 
 class EMG(Devices.Devices):
 
