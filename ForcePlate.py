@@ -45,8 +45,8 @@
 
 
 import Devices
-from lib.GaitCore.Core.Point import Point
-from lib.GaitCore.Core.Newton import Newton
+from Core.Point import Point
+from Core.Newton import Newton
 
 class ForcePlate(Devices.Devices):
 

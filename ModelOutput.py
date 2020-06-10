@@ -43,9 +43,9 @@
 # */
 # //==============================================================================
 
-import lib.GaitCore.Core as core
-from lib.GaitCore.Bio.Leg import Leg
-from lib.GaitCore.Bio.Joint import Joint
+import Core as core
+from Bio.Leg import Leg
+from Bio.Joint import Joint
 
 class ModelOutput(object):
 

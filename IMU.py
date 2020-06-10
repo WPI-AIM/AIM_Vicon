@@ -44,7 +44,7 @@
 # //==============================================================================
 
 import Devices
-from lib.GaitCore.Core.Point import Point
+from Core.Point import Point
 
 class IMU(Devices.Devices):
 
