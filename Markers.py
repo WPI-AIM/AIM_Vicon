@@ -310,9 +310,9 @@ class Markers(object):
         joints_points = []
         fps = 100  # Frame per sec
         keys = self._filtered_markers.keys()
-        nfr = len(self._filtered_markers[keys[0]])  # Number of frames
+        nfr = len(self._filtered_markers[list(keys)[0]])  # Number of frames
 
-        for frame in xrange(nfr):
+        for frame in range(nfr):
             x = []
             y = []
             z = []
