@@ -17,16 +17,9 @@ the Vicon motion capture system. It will automatically attempt to interpolate mi
 * scipy
 
 ## External Dependence 
-All packages are installed in the `lib` folder
+This package requires:
 
 * [AIM_GaitCore](https://github.com/WPI-AIM/AIM_GaitCore.git)
-
-
-
-## IMPORTANT NOTE
-There is a strange bug when reading in the file. It will throw an error if you try to read in the raw file. 
-To solve this problem. Open up the CSV file in Libreoffice or Excel and resave the file. Make sure it's a CSV file. 
-
 
 
 
@@ -35,24 +28,26 @@ To solve this problem. Open up the CSV file in Libreoffice or Excel and resave t
 - New devices connected to the Vicon should extend the Device class
 
 ## Installation
-This package relays on a submodule that needs to be installed
+This package can be installed via pip:
 ```bash
-git clone https://github.com/WPI-AIM/AIM_Vicon.git
-cd AIM_Vicon
-git submodule init
-git submodule update
+pip install git+https://github.com/WPI-AIM/AIM_Vicon.git
 ```
 
 ##Usage
 
 ### Reading Data
 Vicon automatically reads data from the provided file when constructed.
-The constructor accepts two flags: ``verbose`` (defaults to ``False``) and ``interpolate`` (defaults to ``True``).
+The constructor the following flags: ``verbose`` (defaults to ``False``), ``interpolate`` (defaults to ``True``),
+``maxnanstotal``, (defaults to -1), and ``maxnansrow`` (defaults to -1).
 
 If ``verbose`` is set to ``True``, it will print status updates and warnings while reading data. 
 
 If ``interpolate`` is set to ``True``, it will attempt to interpolate missing data points. If ``interpolate`` is set to 
 ``False``, or if a field cannot be interpolated, missing data points will be set to ``np.nan``.
+
+If ``maxnanstotal`` or ``maxnansrow`` are set to non-negative values, they will provide a cap on the maximum allowed
+nans total or in a row, respectively. If a field violates either rule, that field will not be
+interpolated. Setting either of these flags to 0 is equivalent to setting ``interpolate`` to ``False``.
 
 ### Saving Data
 The ``Vicon.save()`` method will save the data previously read.
@@ -70,10 +65,88 @@ Vicon is able to read this, and a future Vicon object reading this value will di
 
 ## Examples
 
+### Interpolation
+Vicon's behavior when it encounters missing data is highly customizable.
+#### Default Case
+With no flags specified, Vicon will attempt to interpolate any amount of missing data in all fields.
+```python
+import Vicon
+
+data = Vicon.Vicon("path/to/file")
+```
+
+#### No Interpolation
+Vicon can be configured to never attempt to interpolate missing data, instead filling any holes with ``np.nan``.
+```python
+import Vicon
+
+data = Vicon.Vicon("path/to/file", interpolate=False)  # No interpolation!
+```
+
+#### Interpolate only small holes
+By using the ``maxnansrow`` field, Vicon can be configured to only attempt to interpolate fields
+if they do not have any holes larger than specified.
+```python
+import Vicon
+
+data = Vicon.Vicon("path/to/file", maxnansrow=100)  # If any field is missing more than 100 values in a row, it will not be interpolated.
+```
+
+#### Interpolate only mostly complete data
+By using the ``maxnanstotal`` field, Vicon will only attempt to interpolate a field if it does not have
+too many missing values.
+```python
+import Vicon
+
+data = Vicon.Vicon("path/to/file", maxnanstotal=1000)  # If any field is missing more than 1000 values in total, it will not be interpolated.
+```
+
+### Saving data
+Vicon can save data into a CSV file. This can be done to save the results of any interpolation, or perhaps
+to copy a CSV file very inefficiently.
+
+#### Default Case
+In the default case, Vicon will overwrite the file that it read from on creation. 
+Any values produced via interpolation will be preceded with '!'. If Vicon encounters such a value while in verbose mode, 
+it will print a warning.
+```python
+import Vicon
+
+data = Vicon.Vicon("path/to/file")
+
+...
+
+data.save()
+```
+
+#### Save to new file
+Vicon can write saved data to a new file.
+```python
+import Vicon
+
+data = Vicon.Vicon("path/to/file")
+
+...
+
+data.save(filename="path/to/new/file")
+```
+
+#### Do not mark interpolated values
+Vicon can be configured to not mark previously interpolated values. **If this is done, any future Vicon object will not be able to distinguish previously interpolated values from real data.**
+```python
+import Vicon
+
+data = Vicon.Vicon("path/to/file")
+
+...
+
+data.save(mark_interpolated=False)
+```
 ### Playing the markers
 
 
 ```python
+import Vicon
 file = "path to CSV file"
 data = Vicon.Vicon(file)
 markers = data.get_markers()
@@ -87,6 +160,7 @@ Rigid bodies are organized  by marker then frame.
 The markers are of type Point. 
 
 ```python
+import Vicon
 file = "path to CSV file"
 data = Vicon.Vicon(file)
 markers = data.get_markers()
@@ -102,12 +176,14 @@ Rigid bodies are organized  by marker then frame.
 The markers are of type Point. 
 
 ```python
+import Vicon
+import Core as core
 file = "path to CSV file"
 data = Vicon.Vicon(file)
 markers = data.get_markers()
 markers.smart_sort() # optional param to remove subject name
 
-# Do severial bodies, use the marker location on the rigidbody
+# Do several bodies, use the marker location on the rigidbody
 frames["hip"] = [core.Point(0.0, 0.0, 0.0),
                  core.Point(70.0, 0, 0.0),
                  core.Point(0, 42.0, 0),
@@ -128,16 +204,16 @@ markers.auto_make_transform(frames)
 
 # Get just one transform and the RMSE error 
 # Can be used to get the transformation between ANY two sets of markers 
- m = markers.get_rigid_body("ben:hip")
- f = [m[0][frame], m[1][frame], m[2][frame], m[3][frame]]
- T, err = Markers.cloud_to_cloud(hip_marker, f)
+m = markers.get_rigid_body("ben:hip")
+f = [m[0][frame], m[1][frame], m[2][frame], m[3][frame]]
+T, err = Markers.cloud_to_cloud(hip_marker, f)
 ```
 
 ### Get model outputs 
-only works with lowerbody model currently
+Currently only works with lower body model.
 
 ```python
-from Vicon import Vicon
+import Vicon
 file = "path to CSV file"
 data = Vicon.Vicon(file)
 model = data.get_model_output()
@@ -147,7 +223,7 @@ model.left_leg().hip.angle.x
 ### Get force plates
 
 ```python
-from Vicon import Vicon
+import Vicon
 file = "path to CSV file"
 data = Vicon.Vicon(file)
 fp = data.get_force_plate(1).get_forces() # pass in 1 or 2 to get the foce plates

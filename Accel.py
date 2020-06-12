@@ -43,8 +43,8 @@
 # */
 # //==============================================================================
 
-from . import Devices
-from lib.GaitCore.Core.Point import Point
+import Devices
+from Core.Point import Point
 
 
 class Accel(Devices.Devices):
