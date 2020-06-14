@@ -246,10 +246,10 @@ class Markers(object):
         :param bodies: list transformation
         :return:
         """
-        for name, value in self._rigid_body.iteritems():
+        for name, value in self._rigid_body.items():
             frames = []
             if name in bodies:
-                for ii in xrange(len(value[0])):
+                for ii in range(len(value[0])):
                         frames.append(cloud_to_cloud(bodies[name], [value[0][ii], value[1][ii], value[2][ii], value[3][ii]])[0])
                 self.add_frame(name, frames)
 
@@ -641,7 +641,7 @@ def cloud_to_cloud(A_, B_):
 
     T = np.zeros((4, 4))
     T[:3, :3] = R
-    for ii in xrange(3):
+    for ii in range(3):
         T[ii, 3] = p[ii]
     T[3, 3] = 1.0
 
@@ -829,7 +829,7 @@ def get_rmse(marker_set, body):
     :return:
     """
     error = []
-    for frame in xrange(1000):
+    for frame in range(1000):
         f = [body[0][frame], body[1][frame], body[2][frame], body[frame]]
         T, err = Markers.cloud_to_cloud(marker_set, f)
         error.append(err)
