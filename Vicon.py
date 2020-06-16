@@ -88,6 +88,10 @@ class Vicon(object):
 
         self._nan_dict = {}
 
+        #  sanitized is a dictionary to keep track of what subject, if any, have had their fields sanitized
+        #  If sanitized[category][subject] exists, that subject has had at least one field sanitized
+        self._sanitized = {}
+
         self.data_dict = self.open_vicon_file(self._file_path, verbose=verbose, interpolate=interpolate,
                                               maxnanstotal=maxnanstotal, maxnansrow=maxnansrow, sanitize=sanitize)
         self._make_Accelerometers(verbose=verbose)
@@ -550,7 +554,7 @@ class Vicon(object):
                     if sub_key not in naninfo[key]:
                         naninfo[key][sub_key] = {"total": 0, "row": 0, "rowtemp": 0}
                     index = indices[(key, sub_key)]
-                    if row[index] == '' or str(row[index]).lower() == "nan":
+                    if index >= len(row) or row[index] == '' or str(row[index]).lower() == "nan":
                         val = np.nan
                         naninfo[key][sub_key]["total"] += 1
                         naninfo[key][sub_key]["rowtemp"] += 1
@@ -633,8 +637,14 @@ class Vicon(object):
                         if verbose:
                             print("Could not interpolate field " + sub_key + ", in subject " + key + \
                                   ", in category " + category + ", as all values were nans!")
-                        if sanitize:
+                        if sanitize and sub_key != "":
                             sub_value["data"] = [0 for i in range(len(sub_value["data"]))]
+                            if verbose:
+                                print("Sanitizing field with all 0s...")
+                            if category not in self._sanitized:
+                                self._sanitized[category] = []
+                            if key not in self._sanitized[category]:
+                                self._sanitized[category].append(key)
                     if category not in self._nan_dict:
                         self._nan_dict[category] = {}
                     if key not in self._nan_dict[category]:
@@ -642,6 +652,14 @@ class Vicon(object):
                     self._nan_dict[category][key][sub_key] = self._false_of_n(len(sub_value["data"]))
 
         return data
+
+    def is_sanitized(self, category, subject):
+        if category not in self._sanitized:
+            return False
+        for x in self._sanitized[category]:
+            if subject in x:
+                return True
+        return False
 
     def _false_of_n(self, n):
         """Helper function to generate an array of Falses of length N"""
