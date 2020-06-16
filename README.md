@@ -3,6 +3,7 @@
 
 ## Authors
 - [Nathaniel Goldfarb](https://github.com/nag92) (nagoldfarb@wpi.edu)
+- [Alek Lewis](https://github.com/ajlewis02) (ajlewis@wpi.edu)
 
 
 A package to read in Vicon data for analysis. This package can be used to read in a CSV file generated from 
@@ -35,10 +36,12 @@ pip install git+https://github.com/WPI-AIM/AIM_Vicon.git
 
 ##Usage
 
-### Reading Data
+### Vicon
+
+#### Reading Data
 Vicon automatically reads data from the provided file when constructed.
 The constructor the following flags: ``verbose`` (defaults to ``False``), ``interpolate`` (defaults to ``True``),
-``maxnanstotal``, (defaults to -1), and ``maxnansrow`` (defaults to -1).
+``maxnanstotal``, (defaults to -1), ``maxnansrow`` (defaults to -1), and ``sanitize`` (defaults to ``True``).
 
 If ``verbose`` is set to ``True``, it will print status updates and warnings while reading data. 
 
@@ -49,7 +52,15 @@ If ``maxnanstotal`` or ``maxnansrow`` are set to non-negative values, they will 
 nans total or in a row, respectively. If a field violates either rule, that field will not be
 interpolated. Setting either of these flags to 0 is equivalent to setting ``interpolate`` to ``False``.
 
-### Saving Data
+If ``sanitize`` is set to ``True``, Vicon will replace any field consisting entirely of NaNs with
+0s. Vicon will keep track of every object that contains a santized field. This can be checked through the ``is_sanitized``
+method.
+
+Note: Some objects, as read by Vicon, contain empty fields named ``""`` that contain no data.
+These fields will be sanitized, but an object will *not* be marked as having been sanitized for having
+one of these fields.
+
+#### Saving Data
 The ``Vicon.save()`` method will save the data previously read.
 It accepts three flags: ``filename``, which defaults to ``None``, ``verbose``, which defaults to ``False``, and
 ``mark_interpolated``, which defaults to ``True``.
@@ -63,10 +74,59 @@ If ``mark_interpolated`` is set to ``True``, any values that were generated thro
 Vicon is able to read this, and a future Vicon object reading this value will display a warning with ``verbose`` set to ``True``.
 
 
+###Markers
+A ``Markers`` object can be obtained through the ``Vicon.get_markers()`` method.
+It contains information about the markers' positions, and contains methods for calculating
+information about the rigid bodies and the joint centers.
+
+####Getting a Rigid Body
+The ``smart_sort`` function will automatically group markers into their rigid bodies.
+Once sorted, it is possible to retrieve the data of all markers associated with a given rigid body, using the ``get_rigid_bodies``
+function.
+
+####Transformation Matrices
+The ``auto_make_transform(frames)`` function will automatically make the transformation matrices for every
+rigid body for which a frame of reference is provided. 
+A frame of reference is an array of points, which represent the locations of the markers on the rigid body
+relative to 0,0 on that rigid body.
+
+The ``get_frame`` function will return the transformation matrices for a given rigid body for all frames.
+``get_frame(RigidBody)[n]`` gives the transformation matrix for the specified rigid body during frame n.
+
+The transformation matrices are of the form local to global - that is to say, where ``T = markers.get_frame(RigidBody)[n]``,
+``np.dot(T, [[0], [0], [0], [1]])`` will return a vector representing the location of the specified rigid body during frame n.
+
+####Frame Shifting
+There are a few static methods which automatically perform frame-shifting operations, requiring only that the user specify points and frames.
+
+``Markers.global_to_frame(frame, vector)`` transforms a vector in the global reference frame to the reference frame specified.
+
+``Markers.global_point_to_frame(frame, vector)`` transforms a Point object from the global frame to the provided frame.
+
+``Markers.local_to_global(frame, vector)`` is the inverse of ``global_to_frame``, and likewise ``Markers.local_point_to_global(frame, point)``
+is the inverse of ``global_point_to_frame``.
+
+``Markers.get_transform_btw_two_frames(parent_frame, child_frame)`` returns the transformation matrix from the parent
+frame of reference to the child frame of reference.
+
+####Calculate Joint Locations
+
+The ``calculate_joints`` function will automatically calculate all lower body joint locations.
+Once run, these joints can be accessed using the ``get_joint(name)`` method.
+
+Joints are represented as their positions for every frame. ``get_joint(name)[frame]`` is an array
+which contains the [x, y, z] of the joint during that frame.
+
+####Playing the Markers
+
+The ``play`` function will create a matplotlib animation of the markers. If the ``calculate_joints`` 
+function has been run, and the ``joints`` flag is set to ``True``, this animation will include the calculated joint locations
+in green.
+
 ## Examples
 
 ### Interpolation
-Vicon's behavior when it encounters missing data is highly customizable.
+Vicon's behavior upon encountering missing data is highly customizable.
 #### Default Case
 With no flags specified, Vicon will attempt to interpolate any amount of missing data in all fields.
 ```python
@@ -154,6 +214,55 @@ markers.smart_sort() # sort the markers into bodies by the names
 markers.play()
 ```
 
+### Playing markers with joints
+```python
+import Vicon
+import Core
+import Markers
+
+v = Vicon.Vicon("Path/To/File")
+markers = v.get_markers()
+markers.smart_sort()
+
+frames = {"Root": [Core.Point.Point(0, 14, 0),
+                   Core.Point.Point(56, 0, 0),
+                   Core.Point.Point(14, 63, 0),
+                   Core.Point.Point(56, 63, 0)], "L_Foot": [Core.Point.Point(0, 0, 0),
+                                                            Core.Point.Point(70, 0, 0),
+                                                            Core.Point.Point(28, 70, 0),
+                                                            Core.Point.Point(70, 63, 0)],
+          "L_Tibia": [Core.Point.Point(0, 0, 0),
+                      Core.Point.Point(0, 63, 0),
+                      Core.Point.Point(70, 14, 0),
+                      Core.Point.Point(35, 49, 0)], "L_Femur": [Core.Point.Point(0, 0, 0),
+                                                                Core.Point.Point(70, 0, 0),
+                                                                Core.Point.Point(0, 42, 0),
+                                                                Core.Point.Point(70, 56, 0)],
+          "R_Foot": [Core.Point.Point(0, 0, 0),
+                     Core.Point.Point(56, 0, 0),
+                     Core.Point.Point(0, 49, 0),
+                     Core.Point.Point(42, 70, 0)], "R_Tibia": [Core.Point.Point(0, 0, 0),
+                                                               Core.Point.Point(42, 0, 0),
+                                                               Core.Point.Point(7, 49, 0),
+                                                               Core.Point.Point(63, 70, 0)],
+          "R_Femur": [Core.Point.Point(7, 0, 0),
+                      Core.Point.Point(56, 0, 0),
+                      Core.Point.Point(0, 70, 0),
+                      Core.Point.Point(42, 49, 0)]}
+
+markers.auto_make_transform(frames)
+
+# If any of the markers on the rigid bodies are missing data, the joint calculation will be inaccurate.
+# With interpolation and sanitizing on, markers will only be missing data if they have been sanitized.
+for body in markers._rigid_body.keys():
+    if ("R_" in body or "L_" in body) and v.is_sanitized("Trajectories", body):
+        print(body + " is missing data! Adjacent joint locations might not be correct!")
+
+markers.calc_joints()
+
+markers.play(joints=True)
+
+```
 
 ### Get rigid body
 Rigid bodies are organized  by marker then frame. 
@@ -177,36 +286,48 @@ The markers are of type Point.
 
 ```python
 import Vicon
-import Core as core
+import Core
+import Markers
+
 file = "path to CSV file"
 data = Vicon.Vicon(file)
 markers = data.get_markers()
 markers.smart_sort() # optional param to remove subject name
 
 # Do several bodies, use the marker location on the rigidbody
-frames["hip"] = [core.Point(0.0, 0.0, 0.0),
-                 core.Point(70.0, 0, 0.0),
-                 core.Point(0, 42.0, 0),
-                 core.Point(35.0, 70.0, 0.0)]
-
-frames["RightThigh"] = [core.Point(0.0, 0.0, 0.0),
-                        core.Point(56.0, 0, 0.0),
-                        core.Point(0, 49.0, 0),
-                        core.Point(56.0, 63.0, 0.0)]
-
-frames["RightShank"] = [core.Point(0.0, 0.0, 0.0),
-                        core.Point(56.0, 0, 0.0),
-                        core.Point(0, 42.0, 0),
-                        core.Point(56.0, 70.0, 0.0)]
+frames = {"Root": [Core.Point.Point(0, 14, 0),
+                   Core.Point.Point(56, 0, 0),
+                   Core.Point.Point(14, 63, 0),
+                   Core.Point.Point(56, 63, 0)], "L_Foot": [Core.Point.Point(0, 0, 0),
+                                                            Core.Point.Point(70, 0, 0),
+                                                            Core.Point.Point(28, 70, 0),
+                                                            Core.Point.Point(70, 63, 0)],
+          "L_Tibia": [Core.Point.Point(0, 0, 0),
+                      Core.Point.Point(0, 63, 0),
+                      Core.Point.Point(70, 14, 0),
+                      Core.Point.Point(35, 49, 0)], "L_Femur": [Core.Point.Point(0, 0, 0),
+                                                                Core.Point.Point(70, 0, 0),
+                                                                Core.Point.Point(0, 42, 0),
+                                                                Core.Point.Point(70, 56, 0)],
+          "R_Foot": [Core.Point.Point(0, 0, 0),
+                     Core.Point.Point(56, 0, 0),
+                     Core.Point.Point(0, 49, 0),
+                     Core.Point.Point(42, 70, 0)], "R_Tibia": [Core.Point.Point(0, 0, 0),
+                                                               Core.Point.Point(42, 0, 0),
+                                                               Core.Point.Point(7, 49, 0),
+                                                               Core.Point.Point(63, 70, 0)],
+          "R_Femur": [Core.Point.Point(7, 0, 0),
+                      Core.Point.Point(56, 0, 0),
+                      Core.Point.Point(0, 70, 0),
+                      Core.Point.Point(42, 49, 0)]}
 
 markers.auto_make_transform(frames)
 
+hip_frames = markers.get_frame("Root")
+l_femur = markers.get_rigid_body("L_Femur")
 
-# Get just one transform and the RMSE error 
-# Can be used to get the transformation between ANY two sets of markers 
-m = markers.get_rigid_body("ben:hip")
-f = [m[0][frame], m[1][frame], m[2][frame], m[3][frame]]
-T, err = Markers.cloud_to_cloud(hip_marker, f)
+#Get the position of all the markers on the left femur rigid body relative to the hip rigid body on frame 0
+rel_pos = [Markers.global_point_to_frame(hip_frames[0], l_femur[n][0]) for n in range(4)]
 ```
 
 ### Get model outputs 
