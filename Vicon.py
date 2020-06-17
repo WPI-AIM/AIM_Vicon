@@ -54,6 +54,7 @@ import ModelOutput
 import EMG
 import Markers
 import IMU
+import matplotlib.pyplot as plt
 
 
 class Vicon(object):
@@ -398,7 +399,8 @@ class Vicon(object):
         elif verbose:
             print("A scan for Accels found no Devices")
 
-    def open_vicon_file(self, file_path, verbose=False, interpolate=True, maxnanstotal=-1, maxnansrow=-1, sanitize=True):
+    def open_vicon_file(self, file_path, verbose=False, interpolate=True, maxnanstotal=-1, maxnansrow=-1,
+                        sanitize=True):
         """
         parses the Vicon sensor data into a dictionary
         :param file_path: file path
@@ -653,6 +655,69 @@ class Vicon(object):
 
         return data
 
+    def graph(self, category, subject, field, showinterpolated=True, colorinterpolated=True, limits=None):
+        """Graphs the data specified. If showinterpolated is set to False, interpolated values will not be shown."""
+        if not (category in self.data_dict and subject in self.data_dict[category] and field in
+                self.data_dict[category][subject]):
+            return  # We don't have any data for this field!
+        interpolated = True in self._nan_dict[category][subject][field]
+        if not interpolated or (not colorinterpolated and showinterpolated):  # Simplest case - just graph the data
+            plt.plot(self.data_dict[category][subject][field]["data"])
+            plt.xlabel("Frame")
+            plt.ylabel(self.data_dict[category][subject][field]["unit"])
+            plt.title("Data in category " + category + ", in subject " + subject + ", in field " + field)
+            if limits is not None:
+                plt.xlim(limits)
+            plt.show()
+        else:
+            nans = self._nan_dict[category][subject][field]
+            data = self.data_dict[category][subject][field]["data"]
+
+            orgdatablocks = []
+            interdatablocks = []
+            orgtemp = []
+            intertemp = []
+            for i in range(len(nans)):
+                if nans[i]:
+                    if len(orgtemp) > 0:
+                        orgdatablocks.append(orgtemp)
+                        orgtemp = []
+                    intertemp.append(i)
+                else:
+                    if len(intertemp) > 0:
+                        interdatablocks.append(intertemp)
+                        intertemp = []
+                    orgtemp.append(i)
+            if len(orgtemp) > 0:
+                orgdatablocks.append(orgtemp)
+            if len(intertemp) > 0:
+                interdatablocks.append(intertemp)
+
+            flagorg = True
+            for blk in orgdatablocks:
+                if flagorg:
+                    plt.plot(blk, data[blk[0]:blk[len(blk) - 1] + 1], "C0", label="Original Data")
+                    flagorg = False
+                else:
+                    plt.plot(blk, data[blk[0]:blk[len(blk) - 1] + 1], "C0")
+
+            if showinterpolated:
+                flagint = True
+                for blk in interdatablocks:
+                    if flagint:
+                        plt.plot([blk[0]-1] + blk + [blk[len(blk) - 1] + 1], data[blk[0]-1:blk[len(blk) - 1] + 2], "C1", label="Interpolated Data")
+                        flagint = False
+                    else:
+                        plt.plot([blk[0]-1] + blk + [blk[len(blk) - 1] + 1], data[blk[0]-1:blk[len(blk) - 1] + 2], "C1")
+                plt.legend()
+
+            plt.xlabel("Frame")
+            plt.ylabel(self.data_dict[category][subject][field]["unit"])
+            plt.title("Data in category " + category + ", in subject " + subject + ", in field " + field)
+            if limits is not None:
+                plt.xlim(limits)
+            plt.show()
+
     def is_sanitized(self, category, subject):
         if category not in self._sanitized:
             return False
@@ -684,7 +749,7 @@ class Vicon(object):
             f.seek(0)
             f.truncate()
             writer = csv.writer(f)
-            for category, subjects in self.data_dict.iteritems():  # for every category in the data...
+            for category, subjects in self.data_dict.items():  # for every category in the data...
                 if verbose:
                     print("Saving category " + category + "...")
                 #  write the header
@@ -750,7 +815,7 @@ class Vicon(object):
             return
         print("Scanning data for differences...")
         flag = False
-        for category, subjects in self.data_dict.iteritems():
+        for category, subjects in self.data_dict.items():
             if category not in other.data_dict:
                 print("Category " + category + " missing!")
                 flag = True
