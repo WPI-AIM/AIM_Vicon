@@ -34,6 +34,8 @@ This package can be installed via pip:
 pip install git+https://github.com/WPI-AIM/AIM_Vicon.git
 ```
 
+(If you have both Python 2 and Python 3 installed you'll need to specify `pip3` - `pip` defaults to Python 2 if installed.)
+
 ##Usage
 
 ### Vicon
