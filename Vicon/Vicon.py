@@ -42,18 +42,15 @@
 #     \version   0.1
 # */
 # //==============================================================================
-import sys
 import csv
 from typing import List, Any
 
 import pandas
 import numpy as np
-import Accel
-import ForcePlate
-import ModelOutput
-import EMG
+from Markers import ModelOutput
+from Devices import EMG, IMU, Accel, ForcePlate
 import Markers
-import IMU
+
 
 class Vicon(object):
 
