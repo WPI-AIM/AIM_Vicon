@@ -72,6 +72,7 @@ class Markers(object):
         self._frames = {}
         self._filter_window = 10
         self._filtered_markers = {}
+        self._joints = {}
 
     @property
     def marker_names(self):
@@ -142,7 +143,7 @@ class Markers(object):
             # if value_name.keys()[0] == "Magnitude( X )" or value_name.keys()[0] == "Count":
             #     continue
 
-            if "Magnitude( X )" in  value_name.keys()or "Count" in value_name.keys():
+            if "Magnitude( X )" in value_name.keys() or "Count" in value_name.keys():
                 continue
 
             x_arr = value_name["X"]["data"]
@@ -161,17 +162,12 @@ class Markers(object):
                 point = core.Point.Point(x_filt[inx], y_filt[inx], z_filt[inx])
                 self._filtered_markers[fixed_name].append(point)
 
-
-
     def set_ground_plane(self, rigid_body, offset_height=14):
 
         markers = self.get_rigid_body("marker_names")
         fit, residual = fit_to_plane(markers)
 
-
-
         pass
-
 
     def smart_sort(self, filter=True):
         """
@@ -246,12 +242,33 @@ class Markers(object):
         :param bodies: list transformation
         :return:
         """
-        for name, value in self._rigid_body.iteritems():
+        for name, value in self._rigid_body.items():
             frames = []
             if name in bodies:
-                for ii in xrange(len(value[0])):
-                        frames.append(cloud_to_cloud(bodies[name], [value[0][ii], value[1][ii], value[2][ii], value[3][ii]])[0])
+                for ii in range(len(value[0])):
+                    frames.append(
+                        cloud_to_cloud(bodies[name], [value[0][ii], value[1][ii], value[2][ii], value[3][ii]])[0])
                 self.add_frame(name, frames)
+
+    def calc_joints(self):
+        """
+        Calculates all lower body joints automatically
+        :return:
+        """
+        self._joints["L_Hip"] = self.calc_l_hip()
+        self._joints["R_Hip"] = self.calc_r_hip()
+        self._joints["L_Knee"] = self.calc_l_knee()
+        self._joints["R_Knee"] = self.calc_r_knee()
+        self._joints["L_Ankle"] = self.calc_l_ankle()
+        self._joints["R_Ankle"] = self.calc_r_ankle()
+
+    def get_joint(self, name):
+        """
+        Get a joint
+        :param name: Name of the joint
+        :return: joint
+        """
+        return self._joints[name]
 
     def get_frame(self, name):
         """
@@ -292,11 +309,130 @@ class Markers(object):
         local_joint = np.array([[0.0], [0.0], [0.0], [0.0]])
 
         for T in Tp:
-            local_joint += transform_vector(np.linalg.pinv(T), global_joint )/len(Tp)
+            local_joint += transform_vector(np.linalg.pinv(T), global_joint) / len(Tp)
 
         return np.vstack((global_joint, [1])), axis, local_joint
 
-    def play(self, joints=None, save=False, name="im"):
+    def _calc_ball_joint(self, parent, child):
+        """
+        Calculates the location of a ball joint between the parent and child rigid bodies.
+        :param parent: Name of the parent rigid body (Ex: Root)
+        :param child: Name of the child rigid body (Ex: L_Femur)
+        :return: 2D array of every position of the ball joint for every frame. Array at index frame is [x, y, z].
+        """
+        child = self.get_rigid_body(child)
+        parent_frame = self.get_frame(parent)
+        frames = len(child[0])
+
+        # Obtain the locations of the child markers relative to the Parent rigid body
+        child_by_parent = [[global_point_to_frame(parent_frame[n], child[i][n]) for n in range(frames)] for i in range(4)]
+        # Identical to child except for the difference in frame of reference
+        # Points are accessed through child_by_parent[marker][frame]
+
+        # Calculate the location of the center of rotation of child relative to the parent, over the entire dataset
+        jointraw = calc_CoR(child_by_parent)
+        # calc_CoR requires that the moving body be rotating around a stationary ball joint.
+        # By switching to the parent's reference frame, we can pretend as if the joint is stationary
+
+        joint = []
+        for n in range(frames):  # Convert back from the hip's frame to the global frame
+            jointn_global = local_point_to_global(parent_frame[n], core.Point.vector_to_point(jointraw))
+            joint.append([jointn_global.x, jointn_global.y, jointn_global.z])
+
+        return joint
+
+    def _calc_hinge_joint(self, parent, child):
+        """
+        Calculates the location of a hinge joint (i.e. a knee joint) between the parent and child rigid bodies
+        :param parent: Name of the parent rigid body (Ex: L_Femur)
+        :param child: Name of the child rigid body (Ex: L_Tibia)
+        :return: 2D array of every position of the center of the hinge joint for every frame. Array at index frame is [x, y, z].
+        """
+        child = self.get_rigid_body(child)
+        parent_frame = self.get_frame(parent)
+        parent = self.get_rigid_body(parent)
+
+        frames = len(child[0])
+
+        child_by_parent = [[global_point_to_frame(parent_frame[n], child[i][n]) for n in range(frames)] for i in range(4)]
+        parent_by_parent = [[global_point_to_frame(parent_frame[n], parent[i][n]) for n in range(frames)] for i in range(4)]
+
+        # calc_CoR isn't meant to be used with hinge joints
+        # It still gives us a point, but the location of this joint is poorly defined along the axis of rotation
+        jointraw = calc_CoR(child_by_parent)
+
+        # calc_AoR gives us the slope of the axis of rotation
+        # Between this and calc_CoR, we can define the line representing the AoR
+        # From there, finding the actual joint is just a matter of finding the point on the line
+        # that is the closest to both the child and the parent
+        jointaxisraw = calc_AoR(child_by_parent)
+
+        joint_by_parent = []
+        for frame in range(frames):  # Find the location on the AoR that is closest to both relevant rigid bodies
+            l_parentn_local = [parent_by_parent[n][frame] for n in range(4)]
+            l_parentn_local = [[n.x, n.y, n.z] for n in l_parentn_local]
+
+            l_childn_local = [child_by_parent[n][frame] for n in range(4)]
+            l_childn_local = [[n.x, n.y, n.z] for n in l_childn_local]
+
+            l_jointn_local = minimize_center(l_childn_local+l_parentn_local, jointaxisraw, [jointraw[0][0], jointraw[1][0], jointraw[2][0]])
+            joint_by_parent.append(l_jointn_local)
+
+        joint = []
+        for n in range(frames):
+            p = core.Point.Point(joint_by_parent[n].x[0], joint_by_parent[n].x[1], joint_by_parent[n].x[2])
+            l_jointn_global = local_point_to_global(parent_frame[n], p)
+            joint.append([l_jointn_global.x, l_jointn_global.y, l_jointn_global.z])
+
+        return joint
+
+    def calc_l_hip(self):
+        """
+        Calculates the location of the left hip.
+        :return: 2D array representing the location of the joint through time.
+        """
+
+        return self._calc_ball_joint("Root", "L_Femur")
+
+    def calc_r_hip(self):
+        """
+        Calculates the location of the right hip.
+        :return: 2D array representing the location of the joint through time.
+        """
+
+        return self._calc_ball_joint("Root", "R_Femur")
+
+    def calc_l_knee(self):
+        """
+        Calculates the location of the left knee.
+        :return: 2D array representing the location of the joint through time.
+        """
+
+        return self._calc_hinge_joint("L_Femur", "L_Tibia")
+
+    def calc_r_knee(self):
+        """
+        Calculates the location of the right knee.
+        :return: 2D array representing the location of the joint through time.
+        """
+
+        return self._calc_hinge_joint("R_Femur", "R_Tibia")
+
+    def calc_l_ankle(self):
+        """
+        Calculates the location of the left ankle.
+        :return: 2D array representing the location of the joint through time.
+        """
+        return self._calc_ball_joint("L_Tibia", "L_Foot")
+
+    def calc_r_ankle(self):
+        """
+        Calculates the location of the right ankle.
+        :return: 2D array representing the location of the joint through time.
+        """
+        return self._calc_ball_joint("R_Tibia", "R_Foot")
+
+    def play(self, joints=False, save=False, name="im"):
         """
         play an animation of the         markers
         :param joints: opital param for joint centers
@@ -310,9 +446,9 @@ class Markers(object):
         joints_points = []
         fps = 100  # Frame per sec
         keys = self._filtered_markers.keys()
-        nfr = len(self._filtered_markers[keys[0]])  # Number of frames
+        nfr = len(self._filtered_markers[list(keys)[0]])  # Number of frames
 
-        for frame in xrange(nfr):
+        for frame in range(nfr):
             x = []
             y = []
             z = []
@@ -327,11 +463,16 @@ class Markers(object):
             x = []
             y = []
             z = []
-            if joints is not None:
-                for joint in joints:
-                    x.append(joint[frame][0])
-                    y.append(joint[frame][1])
-                    z.append(joint[frame][2])
+            if joints:
+                for jointname, joint in self._joints.items():
+                    if frame < len(joint):
+                        x.append(joint[frame][0])
+                        y.append(joint[frame][1])
+                        z.append(joint[frame][2])
+                    else:
+                        x.append(joint[len(joint) - 1][0])
+                        y.append(joint[len(joint) - 1][1])
+                        z.append(joint[len(joint) - 1][2])
                 joints_points.append([x, y, z])
 
         self._fig = plt.figure()
@@ -365,7 +506,7 @@ class Markers(object):
         self._ax.set_xlabel('X Label')
         self._ax.set_ylabel('Y Label')
         self._ax.set_zlabel('Z Label')
-        self._ax.axis([-500, 500, -200, 3000])
+        self._ax.axis([-500, 500, -500, 500])
         self._ax.set_zlim3d(0, 1250)
         self._ax.scatter(x[frame], y[frame], z[frame], c='r', marker='o')
         if len(centers) > 0:
@@ -389,6 +530,28 @@ def transform_markers(transforms, markers):
             adjusted_locations.append(new_marker)
         trans_markers.append(adjusted_locations)
     return trans_markers
+
+
+def global_to_frame(frame, global_vector):
+    """Transforms a vector in the global frame to the provided frame."""
+    return transform_vector(np.linalg.pinv(frame), global_vector)
+
+
+def global_point_to_frame(frame, global_point):
+    """Transforms a Point object from the global frame to the provided frame."""
+    return core.Point.vector_to_point(global_to_frame(frame, core.Point.point_to_vector(global_point)))
+
+
+def frame_to_global(frame, local_vector):
+    """Transforms a vector in the provided local frame to the global frame."""
+    return transform_vector(frame, local_vector)
+
+
+def local_point_to_global(frame, local_point):
+    """Transforms a Point object in the provided local frame to the global frame."""
+    return core.Point.vector_to_point(frame_to_global(frame, core.Point.point_to_vector(local_point)))
+
+
 
 def make_frame(markers):
     """
@@ -477,10 +640,11 @@ def batch_transform_vector(frames, vector):
 
     for T in frames:
         p = np.dot(T, vector)
-        #p = np.dot(np.eye(4), vector)
+        # p = np.dot(np.eye(4), vector)
         trans_vectors.append(p)
 
     return trans_vectors
+
 
 def unit_vector(vector):
     """
@@ -542,7 +706,8 @@ def calc_AoR(markers):
     :rtype np.array
     """
     A = __calc_A(markers)  # calculates the A matrix
-    E_vals, E_vecs = np.linalg.eig(A)  # I believe that the np function eig has a different output than the matlab function eigs
+    E_vals, E_vecs = np.linalg.eig(
+        A)  # I believe that the np function eig has a different output than the matlab function eigs
     min_E_val_idx = np.argmin(E_vals)
     axis = E_vecs[:, min_E_val_idx]
     return axis
@@ -641,10 +806,9 @@ def cloud_to_cloud(A_, B_):
 
     T = np.zeros((4, 4))
     T[:3, :3] = R
-    for ii in xrange(3):
+    for ii in range(3):
         T[ii, 3] = p[ii]
     T[3, 3] = 1.0
-
 
     return T, rmse
 
@@ -829,7 +993,7 @@ def get_rmse(marker_set, body):
     :return:
     """
     error = []
-    for frame in xrange(1000):
+    for frame in range(1000):
         f = [body[0][frame], body[1][frame], body[2][frame], body[frame]]
         T, err = Markers.cloud_to_cloud(marker_set, f)
         error.append(err)
