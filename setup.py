@@ -8,4 +8,3 @@ setuptools.setup(
     packages=find_packages()
     #py_modules=["Vicon", "ModelOutput", "Markers", "IMU", "ForcePlate", "EMG", "Devices", "Accel"]
 )
-git
