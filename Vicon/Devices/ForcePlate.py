@@ -43,33 +43,40 @@
 # */
 # //==============================================================================
 
-import Devices
-from Core.Point import Point
 
-class IMU(Devices.Devices):
+from . import Devices
+from GaitCore.Core import Point
+from GaitCore.Core import Newton
 
-    def __init__(self, name, sensor):
+class ForcePlate(Devices.Devices):
 
-        self._accel = Point(self.sensor["ACCX"],
-                                 self.sensor["ACCZ"],
-                                 self.sensor["ACCY"])
-        self._gyro = Point(self.sensor["GYROX"],
-                                 self.sensor["GYROZ"],
-                                 self.sensor["GYROY"])
+    def __init__(self, name, forces, moments, CoP):
+        self.force = Point.Point(forces["Fx"]["data"], forces["Fy"]["data"], forces["Fz"]["data"])
+        self.moment = Point.Point(moments["Mx"]["data"], moments["My"]["data"], moments["Mz"]["data"])
+        self.CoP = Point.Point(CoP["Cx"]["data"], CoP["Cy"]["data"], CoP["Cz"]["data"])
+        sensor = Newton.Newton(self.CoP, self.force, self.moment, None)
+        super(ForcePlate, self).__init__(name, sensor, "IMU")
 
-        super(IMU, self).__init__(name, sensor, "IMU")
-
-
-    def get_accel(self):
+    def get_forces(self):
         """
 
-        :return:
+        :return: the force from the force plate
+        :rtype: Point
         """
-        return self._accel
+        return self._sensor.force
 
-    def get_gyro(self):
+    def get_moments(self):
         """
 
-        :return:
+        :return: the Moment from the force plate
+        :rtype: Point
         """
-        return self._gyro
+        return self._sensor.moment
+
+    def get_CoP(self):
+        """
+
+        :return: the CoP from the force plate
+        :rtype: Point
+        """
+        return self._sensor.angle

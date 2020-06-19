@@ -43,15 +43,17 @@
 # */
 # //==============================================================================
 
-import Devices
+from . import Devices
+from GaitCore.Core import Point
 
-class EMG(Devices.Devices):
+
+class Accel(Devices.Devices):
 
     def __init__(self, name, sensor):
-        super(EMG, self).__init__(name, sensor, "EMG")
+        self._accel = Point(self.sensor["ACCX"],
+                                self.sensor["ACCZ"],
+                                self.sensor["ACCY"])
+        super(Accel, self).__init__(name, sensor, "Accel")
 
     def get(self):
-        return self.sensor["data"]
-
-    def get_unit(self):
-        return self.sensor["unit"]
+        return self._accel

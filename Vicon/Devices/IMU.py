@@ -43,17 +43,33 @@
 # */
 # //==============================================================================
 
-import Devices
-from Core.Point import Point
+from . import Devices
+from GaitCore.Core import Point
 
-
-class Accel(Devices.Devices):
+class IMU(Devices.Devices):
 
     def __init__(self, name, sensor):
-        self._accel = Point(self.sensor["ACCX"],
-                                self.sensor["ACCZ"],
-                                self.sensor["ACCY"])
-        super(Accel, self).__init__(name, sensor, "Accel")
 
-    def get(self):
+        self._accel = Point.Point(self.sensor["ACCX"],
+                                 self.sensor["ACCZ"],
+                                 self.sensor["ACCY"])
+        self._gyro = Point.Point(self.sensor["GYROX"],
+                                 self.sensor["GYROZ"],
+                                 self.sensor["GYROY"])
+
+        super(IMU, self).__init__(name, sensor, "IMU")
+
+
+    def get_accel(self):
+        """
+
+        :return:
+        """
         return self._accel
+
+    def get_gyro(self):
+        """
+
+        :return:
+        """
+        return self._gyro
