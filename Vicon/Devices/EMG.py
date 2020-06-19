@@ -43,40 +43,16 @@
 # */
 # //==============================================================================
 
+from Vicon import Devices
 
-import Devices
-from Core.Point import Point
-from Core.Newton import Newton
 
-class ForcePlate(Devices.Devices):
+class EMG(Devices.Devices):
 
-    def __init__(self, name, forces, moments, CoP):
-        self.force = Point(forces["Fx"]["data"], forces["Fy"]["data"], forces["Fz"]["data"])
-        self.moment = Point(moments["Mx"]["data"], moments["My"]["data"], moments["Mz"]["data"])
-        self.CoP = Point(CoP["Cx"]["data"], CoP["Cy"]["data"], CoP["Cz"]["data"])
-        sensor = Newton(self.CoP, self.force, self.moment, None)
-        super(ForcePlate, self).__init__(name, sensor, "IMU")
+    def __init__(self, name, sensor):
+        super(EMG, self).__init__(name, sensor, "EMG")
 
-    def get_forces(self):
-        """
+    def get(self):
+        return self.sensor["data"]
 
-        :return: the force from the force plate
-        :rtype: Point
-        """
-        return self._sensor.force
-
-    def get_moments(self):
-        """
-
-        :return: the Moment from the force plate
-        :rtype: Point
-        """
-        return self._sensor.moment
-
-    def get_CoP(self):
-        """
-
-        :return: the CoP from the force plate
-        :rtype: Point
-        """
-        return self._sensor.angle
+    def get_unit(self):
+        return self.sensor["unit"]

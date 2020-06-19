@@ -47,9 +47,9 @@ from typing import List, Any
 
 import pandas
 import numpy as np
-from Markers import ModelOutput
-from Devices import EMG, IMU, Accel, ForcePlate
-import Markers
+from Vicon.Markers import ModelOutput
+from Vicon.Devices import EMG, IMU, Accel, ForcePlate
+from Vicon import Markers
 
 
 class Vicon(object):

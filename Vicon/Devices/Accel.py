@@ -43,7 +43,7 @@
 # */
 # //==============================================================================
 
-import Devices
+from Vicon import Devices
 from Core.Point import Point
 
 
