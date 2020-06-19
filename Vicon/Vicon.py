@@ -47,8 +47,9 @@ from typing import List, Any
 
 import pandas
 import numpy as np
-from Vicon.Markers import ModelOutput
-from Vicon.Devices import EMG, IMU, Accel, ForcePlate
+from .Markers import ModelOutput as modeloutput
+from .Markers import Markers as markers
+from .Devices import EMG, IMU, Accel, ForcePlate
 from Vicon import Markers
 
 
@@ -288,7 +289,7 @@ class Vicon(object):
         :return:
         """
         if "Model Outputs" in self.data_dict:
-            self._model_output = ModelOutput.ModelOutput(self.data_dict["Model Outputs"], self.joint_names)
+            self._model_output = modeloutput.ModelOutput(self.data_dict["Model Outputs"], self.joint_names)
             if verbose:
                 print("Model Outputs generated")
         elif verbose:
@@ -368,7 +369,7 @@ class Vicon(object):
         generate IMU models
         :return: None
         """
-        self._markers = Markers.Markers(self.data_dict["Trajectories"])
+        self._markers = markers.Markers(self.data_dict["Trajectories"])
         self._markers.make_markers()
 
     def _make_Accelerometers(self, verbose=False):

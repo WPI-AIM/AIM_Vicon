@@ -43,7 +43,7 @@
 # */
 # //==============================================================================
 
-from Vicon import Devices
+from . import Devices
 from GaitCore.Core import Point
 
 
