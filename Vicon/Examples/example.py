@@ -46,7 +46,7 @@
 
 import Vicon
 import numpy as np
-import lib.GaitCore.Core as core
+import GaitCore.Core as core
 from Vicon import Vicon
 from Vicon import Markers
 import matplotlib.pyplot as plt
@@ -75,7 +75,7 @@ def animate(frame, x, y, z, centers=None, axis =None):
     :param centers:
     :return:
     """
-    print frame
+
     ax.clear()
     ax.set_xlabel('X Label')
     ax.set_ylabel('Y Label')
@@ -113,7 +113,7 @@ def get_right_knee(file, start, end):
     core = np.array(core)
     vect = np.array([[0.0], [0.0], [0.0], [0.0]])
     max_error = 10000000000
-    for frame in xrange(start, end):
+    for frame in range(start, end):
         f = [shank[0][frame], shank[1][frame], shank[2][frame], shank[3][frame]]
         T, err = Markers.cloud_to_cloud(cloud, f)
         if err < max_error:
@@ -124,7 +124,7 @@ def get_right_knee(file, start, end):
 
     #vect = vect/(end - start)
     centers = []
-    for frame in xrange(len(shank[0])):
+    for frame in range(len(shank[0])):
         f = [shank[0][frame], shank[1][frame], shank[2][frame], shank[3][frame]]
         T, err = Markers.cloud_to_cloud(cloud, f)
         point = np.dot(T, vect)[0:3]
@@ -166,7 +166,6 @@ def get_right_knee(file, start, end):
     fps = 100  # Frame per sec
     keys = markers._filtered_markers.keys()
     nfr = len(markers._filtered_markers[keys[0]])  # Number of frames
-    print "sldfj ",  nfr
     ani = animation.FuncAnimation(fig,
                                   animate, nfr,
                                   fargs=(x_total, y_total, z_total, centers, axis),

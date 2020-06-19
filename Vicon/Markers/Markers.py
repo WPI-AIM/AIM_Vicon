@@ -43,7 +43,7 @@
 # */
 # //==============================================================================
 
-import Core as core
+from GaitCore import Core as core
 import numpy as np
 from scipy.optimize import minimize
 import math

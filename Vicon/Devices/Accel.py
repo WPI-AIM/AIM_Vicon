@@ -44,7 +44,7 @@
 # //==============================================================================
 
 from Vicon import Devices
-from Core.Point import Point
+from GaitCore.Core import Point
 
 
 class Accel(Devices.Devices):
