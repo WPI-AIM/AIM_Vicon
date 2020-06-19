@@ -44,19 +44,15 @@
 # //==============================================================================
 
 
-from Vicon import Vicon
+import Vicon
 import numpy as np
-import matplotlib.pyplot as plt
 import lib.GaitCore.Core as core
 from Vicon import Vicon
 from Vicon import Markers
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
-from mpl_toolkits.mplot3d import Axes3D
 import os
 
 import matplotlib.animation as animation
-from scipy import signal
 
 cloud = [core.Point.Point(0.0, 0.0, 0.0),
          core.Point.Point(70.0, 0.0, 0.0),
