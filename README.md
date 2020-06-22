@@ -36,6 +36,17 @@ pip install git+https://github.com/WPI-AIM/AIM_Vicon.git
 
 (If you have both Python 2 and Python 3 installed you'll need to specify `pip3` - `pip` defaults to Python 2 if installed.)
 
+## Updating
+This package can be updated through pip:
+```bash
+pip install --upgrade git+https://github.com/WPI-AIM/AIM_Vicon.git
+```
+
+If necessary, GaitCore can also be updated through pip:
+```bash
+pip install --upgrade git+https://github.com/WPI-AIM/AIM_GaitCore.git
+```
+
 ##Usage
 
 ### Vicon
