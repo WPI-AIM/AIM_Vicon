@@ -232,7 +232,7 @@ class Markers(object):
         Auto make all the frames based on the order of the markers
         :return:
         """
-        for name, value in self._rigid_body.iteritems():
+        for name, value in self._rigid_body.items():
             frame = self.make_frame(value[0], value[1], value[2], value[3])
             self.add_frame(name, frame)
 
