@@ -43,7 +43,7 @@
 # */
 # //==============================================================================
 
-from Vicon import Devices
+from . import Devices
 
 
 class EMG(Devices.Devices):
