@@ -50,10 +50,9 @@ from GaitCore.Core import Point
 class Accel(Devices.Devices):
 
     def __init__(self, name, sensor):
-        self._accel = Point(self.sensor["ACCX"],
-                                self.sensor["ACCZ"],
-                                self.sensor["ACCY"])
-        super(Accel, self).__init__(name, sensor, "Accel")
+        accel = Point.Point(sensor["ACCX"]["data"],
+                            sensor["ACCY"]["data"],
+                            sensor["ACCZ"]["data"])
+        super(Accel, self).__init__(name, accel, "Accel")
 
-    def get(self):
-        return self._accel
+
