@@ -227,10 +227,7 @@ class Vicon(object):
         :return: imu
         :type: IMU.IMU
         """
-        if index in self.IMUs:
-            return self.IMUs[index]
-        else:
-            return IndexError
+        return self.IMUs[index]
 
     def get_accel(self, index):
         """
@@ -239,10 +236,7 @@ class Vicon(object):
         :return: Accel
         :type: Accel.Accel
         """
-        if index in self.accels.keys():
-            return self.accels[index]
-        else:
-            return IndexError
+        return self.accels[index]
 
     def get_force_plate(self, index):
         """
@@ -251,10 +245,7 @@ class Vicon(object):
         :return: Force plate
         :type: ForcePlate.ForcePlate
         """
-        if index in self.force_plate.keys():
-            return self.force_plate[index]
-        else:
-            raise IndexError
+        return self.force_plate[index]
 
     def get_emg(self, index):
         """
@@ -263,10 +254,7 @@ class Vicon(object):
        :return: EMG
        :rtype: EMG.EMG
         """
-        if index in self._EMGs.keys()
-            raise self._EMGs[index]
-        else:
-            return IndexError
+        return self._EMGs[index]
 
     def get_all_emgs(self):
 
@@ -279,10 +267,7 @@ class Vicon(object):
         :return: EMG
         :rtype: EMG.EMG
         """
-        if index in self._T_EMGs.keys():
-            raise self._T_EMGs[index]
-        else:
-            return IndexError
+        return self._T_EMGs[index]
 
     def get_all_t_emg(self, index):
         """
@@ -345,15 +330,16 @@ class Vicon(object):
             keys = self._filter_dict(sensors, 'Force_Plate')  # + ['Combined Moment'] + ['Combined CoP']
 
             if any("Force_Plate" in word for word in keys):
-                self._force_plates[1] = ForcePlate.ForcePlate("Force_Plate_1",
-                                                              sensors["Force_Plate__Force_1"],
-                                                              sensors["Force_Plate__Moment_1"],
-                                                              sensors["Force_Plate__CoP_1"])
+                key_numbers = set()
+                for key in keys:
+                    key_numbers.add(self._filter_number(key))
 
-                self._force_plates[2] = ForcePlate.ForcePlate("Force_Plate_2",
-                                                              sensors["Force_Plate__Force_2"],
-                                                              sensors["Force_Plate__Moment_2"],
-                                                              sensors["Force_Plate__CoP_2"])
+                for i in key_numbers:
+                    self._force_plates[i] = ForcePlate.ForcePlate("Force_Plate_" + str(i),
+                                                                  sensors["Force_Plate__Force_" + str(i)],
+                                                                  sensors["Force_Plate__Moment_" + str(i)],
+                                                                  sensors["Force_Plate__CoP_"+ str(i)])
+
                 if verbose:
                     print("Force plate models generated")
             elif verbose:
