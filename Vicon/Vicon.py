@@ -247,6 +247,14 @@ class Vicon(object):
         """
         return self.force_plate[index]
 
+    def get_all_force_plate(self):
+        """
+        get the a force plate
+        :return: Force plate
+        :type: ForcePlate.ForcePlate
+        """
+        return self.force_plate
+
     def get_emg(self, index):
         """
        Get the EMG values
