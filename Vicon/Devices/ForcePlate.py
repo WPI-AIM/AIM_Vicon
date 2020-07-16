@@ -80,3 +80,9 @@ class ForcePlate(Devices.Devices):
         :rtype: Point
         """
         return self._sensor.angle
+
+    def get_values(self):
+        """
+        returns the force, CoP, and Moments
+        """
+        return self.get_forces(), self.get_CoP(), self.get_moments()

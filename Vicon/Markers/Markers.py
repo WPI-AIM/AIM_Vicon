@@ -73,7 +73,6 @@ class Markers(object):
         self._filter_window = 10
         self._filtered_markers = {}
         self._joints = {}
-        self._joints_rel = {}
 
     @property
     def marker_names(self):
@@ -118,7 +117,6 @@ class Markers(object):
         :param key: name of the marker key
         :return: the value
         """
-
         return self._filtered_markers[key]
 
     def make_markers(self):
@@ -341,7 +339,8 @@ class Markers(object):
         frames = len(child[0])
 
         # Obtain the locations of the child markers relative to the Parent rigid body
-        child_by_parent = [[global_point_to_frame(parent_frame[n], child[i][n]) for n in range(frames)] for i in range(4)]
+        child_by_parent = [[global_point_to_frame(parent_frame[n], child[i][n]) for n in range(frames)] for i in
+                           range(4)]
         # Identical to child except for the difference in frame of reference
         # Points are accessed through child_by_parent[marker][frame]
 
@@ -462,7 +461,7 @@ class Markers(object):
         y_total = []
         z_total = []
         joints_points = []
-        fps = 100  # Frame per sec
+        fps = 10  # Frame per sec
         keys = self._filtered_markers.keys()
         nfr = len(self._filtered_markers[list(keys)[0]])  # Number of frames
 
@@ -572,8 +571,6 @@ def local_point_to_global(frame, local_point):
 
 def dist(x, y):
     return ((x[0] - y[0])**2 + (x[1] - y[1])**2 + (x[2] - y[2])**2)**0.5
-
-
 
 def make_frame(markers):
     """
