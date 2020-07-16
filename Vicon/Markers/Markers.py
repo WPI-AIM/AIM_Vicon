@@ -935,7 +935,7 @@ def get_distance(point1, point2):
     :param point2: secound point
     :return: distance between two Points
     """
-    return np.sum(np.sqrt(np.power(calc_vector_between_points(point1, point2), 2)))
+    return np.sqrt(np.sum(np.power((point1 - point2).toarray(),2) ))
 
 
 def R_to_axis_angle(matrix):
