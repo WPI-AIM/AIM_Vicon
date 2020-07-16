@@ -254,12 +254,12 @@ class Markers(object):
         Calculates all lower body joints automatically
         :return:
         """
-        self._joints["L_Hip"] = self.calc_l_hip()
-        self._joints["R_Hip"] = self.calc_r_hip()
-        self._joints["L_Knee"] = self.calc_l_knee()
-        self._joints["R_Knee"] = self.calc_r_knee()
-        self._joints["L_Ankle"] = self.calc_l_ankle()
-        self._joints["R_Ankle"] = self.calc_r_ankle()
+        (self._joints["L_Hip"], self._joints_rel["L_Hip"]) = self.calc_l_hip()
+        (self._joints["R_Hip"], self._joints_rel["R_Hip"]) = self.calc_r_hip()
+        (self._joints["L_Knee"], self._joints_rel["L_Knee"]) = self.calc_l_knee()
+        (self._joints["R_Knee"], self._joints_rel["R_Knee"]) = self.calc_r_knee()
+        (self._joints["L_Ankle"], self._joints_rel["L_Ankle"]) = self.calc_l_ankle()
+        (self._joints["R_Ankle"], self._joints_rel["R_Ankle"]) = self.calc_r_ankle()
 
     def get_joint(self, name):
         """
@@ -268,6 +268,21 @@ class Markers(object):
         :return: joint
         """
         return self._joints[name]
+
+    def get_joint_rel(self, name):
+        return self._joints_rel[name]
+
+    def set_joints(self, j):
+        self._joints = j
+
+    def get_joints(self):
+        return self._joints
+
+    def get_joints_rel(self):
+        return self._joints_rel
+
+    def dist_joints(self, a, b):
+        return [dist(self.get_joint(a)[n], self.get_joint(b)[n]) for n in range(len(self._joints[a]))]
 
     def get_frame(self, name):
         """
@@ -317,14 +332,15 @@ class Markers(object):
         Calculates the location of a ball joint between the parent and child rigid bodies.
         :param parent: Name of the parent rigid body (Ex: Root)
         :param child: Name of the child rigid body (Ex: L_Femur)
-        :return: 2D array of every position of the ball joint for every frame. Array at index frame is [x, y, z].
+        :return: Tuple where first element is (x,y,z) in global reference for all frames and second element is (x,y,z) in parent reference for all frames
         """
         child = self.get_rigid_body(child)
         parent_frame = self.get_frame(parent)
         frames = len(child[0])
 
         # Obtain the locations of the child markers relative to the Parent rigid body
-        child_by_parent = [[global_point_to_frame(parent_frame[n], child[i][n]) for n in range(frames)] for i in range(4)]
+        child_by_parent = [[global_point_to_frame(parent_frame[n], child[i][n]) for n in range(frames)] for i in
+                           range(4)]
         # Identical to child except for the difference in frame of reference
         # Points are accessed through child_by_parent[marker][frame]
 
@@ -338,7 +354,7 @@ class Markers(object):
             jointn_global = local_point_to_global(parent_frame[n], core.Point.vector_to_point(jointraw))
             joint.append([jointn_global.x, jointn_global.y, jointn_global.z])
 
-        return joint
+        return joint, jointraw
 
     def _calc_hinge_joint(self, parent, child):
         """
@@ -383,7 +399,9 @@ class Markers(object):
             l_jointn_global = local_point_to_global(parent_frame[n], p)
             joint.append([l_jointn_global.x, l_jointn_global.y, l_jointn_global.z])
 
-        return joint
+        return joint, [[np.mean([joint_by_parent[n].x[0] for n in range(frames)])],
+                       [np.mean([joint_by_parent[n].x[1] for n in range(frames)])],
+                       [np.mean([joint_by_parent[n].x[2] for n in range(frames)])]]
 
     def calc_l_hip(self):
         """
@@ -551,6 +569,8 @@ def local_point_to_global(frame, local_point):
     return core.Point.vector_to_point(frame_to_global(frame, core.Point.point_to_vector(local_point)))
 
 
+def dist(x, y):
+    return ((x[0] - y[0])**2 + (x[1] - y[1])**2 + (x[2] - y[2])**2)**0.5
 
 def make_frame(markers):
     """
