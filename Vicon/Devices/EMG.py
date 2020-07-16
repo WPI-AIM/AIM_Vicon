@@ -52,6 +52,5 @@ class EMG(Devices.Devices):
         emg = Point.Point(sensor["data"],sensor["data"],sensor["data"])
         super(EMG, self).__init__(name, emg, "EMG")
 
-    def get_value(self):
-        return self.sensor["data"]
+
 
