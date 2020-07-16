@@ -204,6 +204,14 @@ class Vicon(object):
         """
         return self.data_dict["Segments"]
 
+    def get_segments_keys(self):
+        """
+        get the segments
+        :return: model segments keys
+        :type: list of keys
+        """
+        return self.data_dict.keys()
+
     def get_markers(self):
         """
         get the markers
@@ -220,6 +228,14 @@ class Vicon(object):
         """
         return self.data_dict["Joints"]
 
+    def get_joints_keys(self):
+        """
+        get the joints keys
+        :return: model joints keys
+        :type: list of keys
+        """
+        return self.data_dict.keys()
+
     def get_imu(self, index):
         """
         get the a imu
@@ -228,6 +244,13 @@ class Vicon(object):
         :type: IMU.IMU
         """
         return self.IMUs[index]
+
+    def get_imu_keys(self):
+        """
+        get the imu keys
+        :type: list
+        """
+        return self.IMUs.keys()
 
     def get_accel(self, index):
         """
@@ -238,6 +261,14 @@ class Vicon(object):
         """
         return self.accels[index]
 
+    def get_accel_keys(self):
+        """
+        get the a Accel keys
+        :return: list of the keys
+        :type: list
+        """
+        return self.accels.keys()
+
     def get_force_plate(self, index):
         """
         get the a force plate
@@ -246,6 +277,14 @@ class Vicon(object):
         :type: ForcePlate.ForcePlate
         """
         return self.force_plate[index]
+
+    def get_force_plate_keys(self):
+        """
+        get the a force plate keys
+        :return: list of keys
+        :type: list
+        """
+        return self.force_plate.keys()
 
     def get_all_force_plate(self):
         """
@@ -264,6 +303,14 @@ class Vicon(object):
         """
         return self._EMGs[index]
 
+    def get_emg(self):
+        """
+       Get the EMG keys
+       :return: list of keys
+       :rtype: list
+        """
+        return self._EMGs.keys()
+
     def get_all_emgs(self):
 
         return self._EMGs
@@ -276,6 +323,14 @@ class Vicon(object):
         :rtype: EMG.EMG
         """
         return self._T_EMGs[index]
+
+    def get_t_emg_keys(self):
+        """
+        Get the T EMG keys
+        :return: list of keys
+        :rtype: list
+        """
+        return self._T_EMGs.keys()
 
     def get_all_t_emg(self, index):
         """

@@ -119,6 +119,14 @@ class Markers(object):
         """
         return self._filtered_markers[key]
 
+    def get_marker_keys(self):
+        """
+
+        :param key: name of the marker key
+        :return: the value
+        """
+        return self._filtered_markers.keys()
+
     def make_markers(self):
         """
         Convert the dictioanry into something a that can be easy read
@@ -300,6 +308,15 @@ class Markers(object):
         """
 
         return self._rigid_body[name]
+
+    def get_rigid_body_keys(self):
+        """
+
+        :param name: name of rigid body
+        :return: transformation of the rigid body
+        """
+
+        return self._rigid_body.keys()
 
     def calc_joint_center(self, parent_name, child_name, start, end):
         """
