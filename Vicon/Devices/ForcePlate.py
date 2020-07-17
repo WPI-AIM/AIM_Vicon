@@ -45,15 +45,15 @@
 
 
 from . import Devices
-from GaitCore.Core import Point
+from GaitCore.Core import PointArray
 from GaitCore.Core import Newton
 
 class ForcePlate(Devices.Devices):
 
     def __init__(self, name, forces, moments, CoP):
-        self.force = Point.Point(forces["Fx"]["data"], forces["Fy"]["data"], forces["Fz"]["data"])
-        self.moment = Point.Point(moments["Mx"]["data"], moments["My"]["data"], moments["Mz"]["data"])
-        self.CoP = Point.Point(CoP["Cx"]["data"], CoP["Cy"]["data"], CoP["Cz"]["data"])
+        self.force = PointArray.PointArray(forces["Fx"]["data"], forces["Fy"]["data"], forces["Fz"]["data"])
+        self.moment = PointArray.PointArray(moments["Mx"]["data"], moments["My"]["data"], moments["Mz"]["data"])
+        self.CoP = PointArray.PointArray(CoP["Cx"]["data"], CoP["Cy"]["data"], CoP["Cz"]["data"])
         sensor = Newton.Newton(self.CoP, self.force, self.moment, None)
         super(ForcePlate, self).__init__(name, sensor, "IMU")
 

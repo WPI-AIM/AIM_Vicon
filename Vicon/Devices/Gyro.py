@@ -44,13 +44,13 @@
 # //==============================================================================
 
 from . import Devices
-from GaitCore.Core import Point
+from GaitCore.Core import PointArray
 
 
 class Gyro(Devices.Devices):
 
     def __init__(self, name, sensor):
-        gyro = Point.Point(sensor["GYROX"]["data"],
+        gyro = PointArray.PointArray(sensor["GYROX"]["data"],
                            sensor["GYROY"]["data"],
                            sensor["GYROZ"]["data"])
         super(Gyro, self).__init__(name, gyro, "Gyro")

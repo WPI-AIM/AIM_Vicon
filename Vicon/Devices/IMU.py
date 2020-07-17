@@ -44,16 +44,15 @@
 # //==============================================================================
 
 from . import Devices
-from GaitCore.Core import Point
+from GaitCore.Core import PointArray
 
 class IMU(Devices.Devices):
 
     def __init__(self, name, sensor):
-
-        self._accel = Point.Point(sensor["ACCX"]["data"],
+        self._accel = PointArray.PointArray(sensor["ACCX"]["data"],
                                  sensor["ACCY"]["data"],
                                  sensor["ACCZ"]["data"])
-        self._gyro = Point.Point(sensor["GYROX"]["data"],
+        self._gyro = PointArray.PointArray(sensor["GYROX"]["data"],
                                  sensor["GYROY"]["data"],
                                  sensor["GYROZ"]["data"])
 

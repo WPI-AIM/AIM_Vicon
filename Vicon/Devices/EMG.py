@@ -44,12 +44,12 @@
 # //==============================================================================
 
 from . import Devices
-from GaitCore.Core import Point
+from GaitCore.Core import PointArray
 
 class EMG(Devices.Devices):
 
     def __init__(self, name, sensor):
-        emg = Point.Point(sensor["data"],sensor["data"],sensor["data"])
+        emg = PointArray.PointArray(sensor["data"],sensor["data"],sensor["data"])
         super(EMG, self).__init__(name, emg, "EMG")
 
 

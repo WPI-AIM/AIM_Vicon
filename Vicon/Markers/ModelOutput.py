@@ -62,19 +62,19 @@ class ModelOutput(object):
                 moment = None
                 force = None
                 if side + output + "Angles" in data.keys():
-                    angle = core.Point.Point(data[side + output + "Angles"]["X"]["data"],
+                    angle = core.PointArray.PointArray(data[side + output + "Angles"]["X"]["data"],
                                        data[side + output + "Angles"]["Y"]["data"],
                                        data[side + output + "Angles"]["Z"]["data"])
                 if side + output + "Force" in data.keys():
-                    force = core.Point.Point(data[side + output + "Force"]["X"]["data"],
+                    force = core.PointArray.PointArray(data[side + output + "Force"]["X"]["data"],
                                        data[side + output + "Force"]["Y"]["data"],
                                        data[side + output + "Force"]["Z"]["data"])
                 if side + output + "Moment" in data.keys():
-                    moment = core.Point.Point(data[side + output + "Moment"]["X"]["data"],
+                    moment = core.PointArray.PointArray(data[side + output + "Moment"]["X"]["data"],
                                         data[side + output + "Moment"]["Y"]["data"],
                                         data[side + output + "Moment"]["Z"]["data"])
                 if side + output + "Power" in data.keys():
-                    power = core.Point.Point(data[side + output + "Power"]["X"]["data"],
+                    power = core.PointArray.PointArray(data[side + output + "Power"]["X"]["data"],
                                        data[side + output + "Power"]["Y"]["data"],
                                        data[side + output + "Power"]["Z"]["data"])
 
