@@ -73,6 +73,7 @@ class Markers(object):
         self._filter_window = 10
         self._filtered_markers = {}
         self._joints = {}
+        self._joints_rel = {}
 
     @property
     def marker_names(self):
@@ -176,6 +177,17 @@ class Markers(object):
 
         pass
 
+    def _is_valid_marker(self, name):
+        """If a marker consists of all zero points, it does not contain valid data,
+         and thus should not be included in the rigid body."""
+        for point in self.get_marker(name):
+            if not self._is_z_point(point):
+                return True
+        return False
+
+    def _is_z_point(self, point):
+        return point.x == 0 and point.y == 0 and point.z == 0
+
     def smart_sort(self, filter=True):
         """
         Gather all the frames and attempt to sort the markers into the rigid markers
@@ -191,11 +203,11 @@ class Markers(object):
             markers_keys.sort()
             markers = []
             for marker in markers_keys:
-
-                if filter:
-                    markers.append(self._filtered_markers[marker])
-                else:
-                    markers.append(self._raw_markers[marker])
+                if self._is_valid_marker(marker):
+                    if filter:
+                        markers.append(self._filtered_markers[marker])
+                    else:
+                        markers.append(self._raw_markers[marker])
             self._rigid_body[name] = markers
 
     def make_frame(self, _origin, _x, _y, _extra):
@@ -487,13 +499,15 @@ class Markers(object):
             y = []
             z = []
             for key in keys:
-                point = self._filtered_markers[key][frame]
-                x += [point.x]
-                y += [point.y]
-                z += [point.z]
-            x_total.append(x)
-            y_total.append(y)
-            z_total.append(z)
+                if self._is_valid_marker(key):
+                    point = self._filtered_markers[key][frame]
+                    x += [point.x]
+                    y += [point.y]
+                    z += [point.z]
+            if len(x) > 0:
+                x_total.append(x)
+                y_total.append(y)
+                z_total.append(z)
             x = []
             y = []
             z = []
