@@ -205,6 +205,14 @@ class Vicon(object):
         """
         return self.data_dict["Segments"]
 
+    def get_segments_keys(self):
+        """
+        get the segments
+        :return: model segments keys
+        :type: list of keys
+        """
+        return self.data_dict.keys()
+
     def get_markers(self):
         """
         get the markers
@@ -221,6 +229,14 @@ class Vicon(object):
         """
         return self.data_dict["Joints"]
 
+    def get_joints_keys(self):
+        """
+        get the joints keys
+        :return: model joints keys
+        :type: list of keys
+        """
+        return self.data_dict.keys()
+
     def get_imu(self, index):
         """
         get the a imu
@@ -229,6 +245,13 @@ class Vicon(object):
         :type: IMU.IMU
         """
         return self.IMUs[index]
+
+    def get_imu_keys(self):
+        """
+        get the imu keys
+        :type: list
+        """
+        return self.IMUs.keys()
 
     def get_accel(self, index):
         """
@@ -239,6 +262,14 @@ class Vicon(object):
         """
         return self.accels[index]
 
+    def get_accel_keys(self):
+        """
+        get the a Accel keys
+        :return: list of the keys
+        :type: list
+        """
+        return self.accels.keys()
+
     def get_force_plate(self, index):
         """
         get the a force plate
@@ -248,6 +279,22 @@ class Vicon(object):
         """
         return self.force_plate[index]
 
+    def get_force_plate_keys(self):
+        """
+        get the a force plate keys
+        :return: list of keys
+        :type: list
+        """
+        return self.force_plate.keys()
+
+    def get_all_force_plate(self):
+        """
+        get the a force plate
+        :return: Force plate
+        :type: ForcePlate.ForcePlate
+        """
+        return self.force_plate
+
     def get_emg(self, index):
         """
        Get the EMG values
@@ -256,6 +303,14 @@ class Vicon(object):
        :rtype: EMG.EMG
         """
         return self._EMGs[index]
+
+    def get_emg(self):
+        """
+       Get the EMG keys
+       :return: list of keys
+       :rtype: list
+        """
+        return self._EMGs.keys()
 
     def get_all_emgs(self):
 
@@ -270,6 +325,14 @@ class Vicon(object):
         """
         return self._T_EMGs[index]
 
+    def get_t_emg_keys(self):
+        """
+        Get the T EMG keys
+        :return: list of keys
+        :rtype: list
+        """
+        return self._T_EMGs.keys()
+
     def get_all_t_emg(self, index):
         """
         Get the T EMG values
@@ -279,6 +342,24 @@ class Vicon(object):
         """
         return self._T_EMGs
 
+    def _check_keys(self, key_list, key):
+        """
+
+        :param dict:
+        :param key:
+        :return:
+        """
+
+        return any(key in s for s in key_list)
+
+    def _filter_number(self, key):
+        """
+
+        :param key:
+        :return:
+        """
+        return int(''.join(filter(str.isdigit, key)))
+
     def _filter_dict(self, sensors, substring):
         """
         filter the dictionary
@@ -287,6 +368,7 @@ class Vicon(object):
         :return: keys that contain the substring
         :type: list
         """
+        my_list = []
         return list(filter(lambda x: substring in x, sensors.keys()))
 
     def _make_model(self, verbose=False):
@@ -312,15 +394,16 @@ class Vicon(object):
             keys = self._filter_dict(sensors, 'Force_Plate')  # + ['Combined Moment'] + ['Combined CoP']
 
             if any("Force_Plate" in word for word in keys):
-                self._force_plates[1] = ForcePlate.ForcePlate("Force_Plate_1",
-                                                              sensors["Force_Plate__Force_1"],
-                                                              sensors["Force_Plate__Moment_1"],
-                                                              sensors["Force_Plate__CoP_1"])
+                key_numbers = set()
+                for key in keys:
+                    key_numbers.add(self._filter_number(key))
 
-                self._force_plates[2] = ForcePlate.ForcePlate("Force_Plate_2",
-                                                              sensors["Force_Plate__Force_2"],
-                                                              sensors["Force_Plate__Moment_2"],
-                                                              sensors["Force_Plate__CoP_2"])
+                for i in key_numbers:
+                    self._force_plates[i] = ForcePlate.ForcePlate("Force_Plate_" + str(i),
+                                                                  sensors["Force_Plate__Force_" + str(i)],
+                                                                  sensors["Force_Plate__Moment_" + str(i)],
+                                                                  sensors["Force_Plate__CoP_"+ str(i)])
+
                 if verbose:
                     print("Force plate models generated")
             elif verbose:
@@ -331,20 +414,21 @@ class Vicon(object):
     def _make_markers(self):
         markers = self.data_dict["Trajectories"]
 
-    def _make_EMGs(self, verbose=False):
+    def _make_EMGs(self, verbose=True):
         """
         generate EMG models
         :return: None
         """
         if "Devices" in self.data_dict:
             sensors = self.data_dict["Devices"]
-            if "EMG" in sensors:
+            all_keys = self._filter_dict(sensors, 'EMG')
+            if len(all_keys) > 0:
                 all_keys = self._filter_dict(sensors, 'EMG')
                 T_EMG_keys = self._filter_dict(sensors, 'T_EMG')
                 EMG_keys = [x for x in all_keys if x not in T_EMG_keys]
                 for e_key, t_key in zip(EMG_keys, T_EMG_keys):
-                    self._T_EMGs[int(filter(str.isdigit, t_key))] = EMG.EMG(t_key, sensors[t_key]["EMG"])
-                    self._EMGs[int(filter(str.isdigit, e_key))] = EMG.EMG(e_key, sensors[e_key]["IM EMG"])
+                    self._T_EMGs[self._filter_number(t_key)] = EMG.EMG(t_key, sensors[t_key]["EMG"])
+                    self._EMGs[self._filter_number(e_key)] = EMG.EMG(e_key, sensors[e_key]["IM EMG"])
                 if verbose:
                     print("EMG models generated")
             elif verbose:
@@ -359,10 +443,10 @@ class Vicon(object):
         """
         if "Devices" in self.data_dict:
             sensors = self.data_dict["Devices"]
-            if "IMU" in sensors:
-                keys = self._filter_dict(sensors, 'IMU')
+            keys = self._filter_dict(sensors, 'IMU')
+            if len(keys) > 0:
                 for key in keys:
-                    self._IMUs[int(filter(str.isdigit, key))] = IMU.IMU(key, sensors[key])
+                    self._IMUs[self._filter_number(key)] = IMU.IMU(key, sensors[key])
                 if verbose:
                     print("IMU models Generated")
             elif verbose:
@@ -385,10 +469,10 @@ class Vicon(object):
         """
         if "Devices" in self.data_dict:
             sensors = self.data_dict["Devices"]
-            if "Accel" in sensors:
-                keys = self._filter_dict(sensors, 'Accel')
+            keys = self._filter_dict(sensors, 'Accel')
+            if len(keys) > 0:
                 for key in keys:
-                    self._accels[int(filter(str.isdigit, key))] = Accel.Accel(key, sensors[key])
+                    self._accels[self._filter_number(key)] = Accel.Accel(key, sensors[key])
                 if verbose:
                     print("Accel models generated")
             elif verbose:

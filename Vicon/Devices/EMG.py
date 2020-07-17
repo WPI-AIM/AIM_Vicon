@@ -44,15 +44,13 @@
 # //==============================================================================
 
 from . import Devices
-
+from GaitCore.Core import PointArray
 
 class EMG(Devices.Devices):
 
     def __init__(self, name, sensor):
-        super(EMG, self).__init__(name, sensor, "EMG")
+        emg = PointArray.PointArray(sensor["data"],sensor["data"],sensor["data"])
+        super(EMG, self).__init__(name, emg, "EMG")
 
-    def get(self):
-        return self.sensor["data"]
 
-    def get_unit(self):
-        return self.sensor["unit"]
+

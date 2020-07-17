@@ -49,13 +49,12 @@ from GaitCore.Core import PointArray
 class IMU(Devices.Devices):
 
     def __init__(self, name, sensor):
-
-        self._accel = PointArray.PointArray(self.sensor["ACCX"],
-                                 self.sensor["ACCZ"],
-                                 self.sensor["ACCY"])
-        self._gyro = PointArray.PoinPointArrayt(self.sensor["GYROX"],
-                                 self.sensor["GYROZ"],
-                                 self.sensor["GYROY"])
+        self._accel = PointArray.PointArray(sensor["ACCX"]["data"],
+                                 sensor["ACCY"]["data"],
+                                 sensor["ACCZ"]["data"])
+        self._gyro = PointArray.PointArray(sensor["GYROX"]["data"],
+                                 sensor["GYROY"]["data"],
+                                 sensor["GYROZ"]["data"])
 
         super(IMU, self).__init__(name, sensor, "IMU")
 
@@ -73,3 +72,6 @@ class IMU(Devices.Devices):
         :return:
         """
         return self._gyro
+
+    def get_values(self):
+        return self._accel, self._gyro
