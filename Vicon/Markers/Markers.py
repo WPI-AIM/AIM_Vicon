@@ -1035,18 +1035,17 @@ def points_to_matrix(points):
     return cloud
 
 
-def get_rmse(marker_set, body):
+def get_rmse(marker_set, body, frame):
     """
     Get the RMSE of the transform and a body location
-    :param marker_set:
-    :param body:
+    :param marker_set: The location of the markers on the rigid body
+    :param body: The location of the markers in the global frame
+    :param frame: The frame to get the error
     :return:
     """
-    error = []
-    for frame in range(1000):
-        f = [body[0][frame], body[1][frame], body[2][frame], body[frame]]
-        T, err = Markers.cloud_to_cloud(marker_set, f)
-        error.append(err)
+    f = [body[0][frame], body[1][frame], body[2][frame], body[3][frame]]
+    T, err = cloud_to_cloud(marker_set, f)
+    return err
 
 
 def fit_to_plane(points):
