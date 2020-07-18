@@ -494,6 +494,7 @@ class Markers(object):
         fps = 10  # Frame per sec
         keys = self._filtered_markers.keys()
         nfr = len(self._filtered_markers[list(keys)[0]])  # Number of frames
+        root0z0 = self._filtered_markers["Root0"][0].z
 
         for frame in range(nfr):
             x = []
@@ -510,7 +511,7 @@ class Markers(object):
                         root0 = self._filtered_markers["Root0"][frame]
                         x += [point.x - root0.x]
                         y += [point.y - root0.y]
-                        z += [point.z - root0.z]
+                        z += [point.z - root0.z + root0z0]
             if len(x) > 0:
                 x_total.append(x)
                 y_total.append(y)
@@ -520,14 +521,19 @@ class Markers(object):
             z = []
             if joints:
                 for jointname, joint in self._joints.items():
-                    if frame < len(joint):
+                    f = frame
+                    if frame >= len(joint):
+                        f = len(joint) - 1
+
+                    if not center:
                         x.append(joint[frame][0])
                         y.append(joint[frame][1])
                         z.append(joint[frame][2])
                     else:
-                        x.append(joint[len(joint) - 1][0])
-                        y.append(joint[len(joint) - 1][1])
-                        z.append(joint[len(joint) - 1][2])
+                        root0 = self._filtered_markers["Root0"][frame]
+                        x.append(joint[frame][0] - root0.x)
+                        y.append(joint[frame][1] - root0.y)
+                        z.append(joint[frame][2] - root0.z + root0z0)
                 joints_points.append([x, y, z])
 
         self._fig = plt.figure()
