@@ -478,11 +478,12 @@ class Markers(object):
         """
         return self._calc_ball_joint("R_Tibia", "R_Foot")
 
-    def play(self, joints=False, save=False, name="im"):
+    def play(self, joints=False, save=False, name="im", center=False):
         """
         play an animation of the         markers
         :param joints: opital param for joint centers
         :param save: bool to save the animation
+        :param center: bool to keep the markers centered
         :return: name of file
         """
 
@@ -501,9 +502,15 @@ class Markers(object):
             for key in keys:
                 if self._is_valid_marker(key):
                     point = self._filtered_markers[key][frame]
-                    x += [point.x]
-                    y += [point.y]
-                    z += [point.z]
+                    if not center:
+                        x += [point.x]
+                        y += [point.y]
+                        z += [point.z]
+                    else:
+                        root0 = self._filtered_markers["Root0"][frame]
+                        x += [point.x - root0.x]
+                        y += [point.y - root0.y]
+                        z += [point.z - root0.z]
             if len(x) > 0:
                 x_total.append(x)
                 y_total.append(y)
