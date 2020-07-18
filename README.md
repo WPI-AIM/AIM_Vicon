@@ -134,7 +134,8 @@ which contains the [x, y, z] of the joint during that frame.
 
 The ``play`` function will create a matplotlib animation of the markers. If the ``calculate_joints`` 
 function has been run, and the ``joints`` flag is set to ``True``, this animation will include the calculated joint locations
-in green.
+in green. If the ``center`` flag is set to ``True``, the body will be anchored to the center of the screen. This is highly recommended
+for any dataset where the markers move a large distance from their starting position.
 
 ## Examples
 
