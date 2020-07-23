@@ -74,6 +74,7 @@ class Markers(object):
         self._filtered_markers = {}
         self._joints = {}
         self._joints_rel = {}
+        self._joints_rel_child = {}
 
     @property
     def marker_names(self):
@@ -274,12 +275,12 @@ class Markers(object):
         Calculates all lower body joints automatically
         :return:
         """
-        (self._joints["L_Hip"], self._joints_rel["L_Hip"]) = self.calc_l_hip()
-        (self._joints["R_Hip"], self._joints_rel["R_Hip"]) = self.calc_r_hip()
-        (self._joints["L_Knee"], self._joints_rel["L_Knee"]) = self.calc_l_knee()
-        (self._joints["R_Knee"], self._joints_rel["R_Knee"]) = self.calc_r_knee()
-        (self._joints["L_Ankle"], self._joints_rel["L_Ankle"]) = self.calc_l_ankle()
-        (self._joints["R_Ankle"], self._joints_rel["R_Ankle"]) = self.calc_r_ankle()
+        (self._joints["L_Hip"], self._joints_rel["L_Hip"], self._joints_rel_child["L_Hip"]) = self.calc_l_hip()
+        (self._joints["R_Hip"], self._joints_rel["R_Hip"], self._joints_rel_child["R_Hip"]) = self.calc_r_hip()
+        (self._joints["L_Knee"], self._joints_rel["L_Knee"], self._joints_rel_child["L_Knee"]) = self.calc_l_knee()
+        (self._joints["R_Knee"], self._joints_rel["R_Knee"], self._joints_rel_child["R_Knee"]) = self.calc_r_knee()
+        (self._joints["L_Ankle"], self._joints_rel["L_Ankle"], self._joints_rel_child["L_Ankle"]) = self.calc_l_ankle()
+        (self._joints["R_Ankle"], self._joints_rel["R_Ankle"], self._joints_rel_child["R_Ankle"]) = self.calc_r_ankle()
 
     def get_joint(self, name):
         """
@@ -292,6 +293,9 @@ class Markers(object):
     def get_joint_rel(self, name):
         return self._joints_rel[name]
 
+    def get_joint_rel_child(self, name):
+        return self._joints_rel_child[name]
+
     def set_joints(self, j):
         self._joints = j
 
@@ -300,6 +304,9 @@ class Markers(object):
 
     def get_joints_rel(self):
         return self._joints_rel
+
+    def get_joints_rel_child(self):
+        return self._joints_rel_child
 
     def dist_joints(self, a, b):
         return [dist(self.get_joint(a)[n], self.get_joint(b)[n]) for n in range(len(self._joints[a]))]
@@ -379,11 +386,13 @@ class Markers(object):
         # By switching to the parent's reference frame, we can pretend as if the joint is stationary
 
         joint = []
+        joint_by_child = core.Point.point_to_vector(global_point_to_frame(
+            self.get_frame(child)[0], local_point_to_global(parent_frame[0], core.Point.vector_to_point(jointraw))))
         for n in range(frames):  # Convert back from the hip's frame to the global frame
             jointn_global = local_point_to_global(parent_frame[n], core.Point.vector_to_point(jointraw))
             joint.append([jointn_global.x, jointn_global.y, jointn_global.z])
 
-        return joint, jointraw
+        return joint, jointraw, joint_by_child
 
     def _calc_hinge_joint(self, parent, child):
         """
@@ -423,6 +432,8 @@ class Markers(object):
             joint_by_parent.append(l_jointn_local)
 
         joint = []
+        joint_by_child = core.Point.point_to_vector(global_point_to_frame(
+            self.get_frame(child)[0], local_point_to_global(parent_frame[0], core.Point.vector_to_point(jointraw))))
         for n in range(frames):
             p = core.Point.Point(joint_by_parent[n].x[0], joint_by_parent[n].x[1], joint_by_parent[n].x[2])
             l_jointn_global = local_point_to_global(parent_frame[n], p)
@@ -430,7 +441,7 @@ class Markers(object):
 
         return joint, [[np.mean([joint_by_parent[n].x[0] for n in range(frames)])],
                        [np.mean([joint_by_parent[n].x[1] for n in range(frames)])],
-                       [np.mean([joint_by_parent[n].x[2] for n in range(frames)])]]
+                       [np.mean([joint_by_parent[n].x[2] for n in range(frames)])]], joint_by_child
 
     def calc_l_hip(self):
         """
