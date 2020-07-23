@@ -363,14 +363,14 @@ class Markers(object):
 
         return np.vstack((global_joint, [1])), axis, local_joint
 
-    def _calc_ball_joint(self, parent, child):
+    def _calc_ball_joint(self, parent, child_name):
         """
         Calculates the location of a ball joint between the parent and child rigid bodies.
         :param parent: Name of the parent rigid body (Ex: Root)
         :param child: Name of the child rigid body (Ex: L_Femur)
         :return: Tuple where first element is (x,y,z) in global reference for all frames and second element is (x,y,z) in parent reference for all frames
         """
-        child = self.get_rigid_body(child)
+        child = self.get_rigid_body(child_name)
         parent_frame = self.get_frame(parent)
         frames = len(child[0])
 
@@ -387,21 +387,21 @@ class Markers(object):
 
         joint = []
         joint_by_child = core.Point.point_to_vector(global_point_to_frame(
-            self.get_frame(child)[0], local_point_to_global(parent_frame[0], core.Point.vector_to_point(jointraw))))
+            self.get_frame(child_name)[0], local_point_to_global(parent_frame[0], core.Point.vector_to_point(jointraw))))
         for n in range(frames):  # Convert back from the hip's frame to the global frame
             jointn_global = local_point_to_global(parent_frame[n], core.Point.vector_to_point(jointraw))
             joint.append([jointn_global.x, jointn_global.y, jointn_global.z])
 
         return joint, jointraw, joint_by_child
 
-    def _calc_hinge_joint(self, parent, child):
+    def _calc_hinge_joint(self, parent, child_name):
         """
         Calculates the location of a hinge joint (i.e. a knee joint) between the parent and child rigid bodies
         :param parent: Name of the parent rigid body (Ex: L_Femur)
         :param child: Name of the child rigid body (Ex: L_Tibia)
         :return: 2D array of every position of the center of the hinge joint for every frame. Array at index frame is [x, y, z].
         """
-        child = self.get_rigid_body(child)
+        child = self.get_rigid_body(child_name)
         parent_frame = self.get_frame(parent)
         parent = self.get_rigid_body(parent)
 
@@ -433,7 +433,7 @@ class Markers(object):
 
         joint = []
         joint_by_child = core.Point.point_to_vector(global_point_to_frame(
-            self.get_frame(child)[0], local_point_to_global(parent_frame[0], core.Point.vector_to_point(jointraw))))
+            self.get_frame(child_name)[0], local_point_to_global(parent_frame[0], core.Point.vector_to_point(jointraw))))
         for n in range(frames):
             p = core.Point.Point(joint_by_parent[n].x[0], joint_by_parent[n].x[1], joint_by_parent[n].x[2])
             l_jointn_global = local_point_to_global(parent_frame[n], p)
