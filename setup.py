@@ -3,7 +3,7 @@ from setuptools import  find_packages
 
 setuptools.setup(
     name="Vicon",
-    version="1.0",
+    version="1.2",
     install_requires=["GaitCore @ git+https://github.com/nag92/AIM_GaitCore.git",
         "numpy",
         "scipy",

@@ -73,6 +73,8 @@ class Markers(object):
         self._filter_window = 10
         self._filtered_markers = {}
         self._joints = {}
+        self._joints_rel = {}
+        self._joints_rel_child = {}
 
     @property
     def marker_names(self):
@@ -117,8 +119,15 @@ class Markers(object):
         :param key: name of the marker key
         :return: the value
         """
-
         return self._filtered_markers[key]
+
+    def get_marker_keys(self):
+        """
+
+        :param key: name of the marker key
+        :return: the value
+        """
+        return self._filtered_markers.keys()
 
     def make_markers(self):
         """
@@ -169,6 +178,17 @@ class Markers(object):
 
         pass
 
+    def _is_valid_marker(self, name):
+        """If a marker consists of all zero points, it does not contain valid data,
+         and thus should not be included in the rigid body."""
+        for point in self.get_marker(name):
+            if not self._is_z_point(point):
+                return True
+        return False
+
+    def _is_z_point(self, point):
+        return point.x == 0 and point.y == 0 and point.z == 0
+
     def smart_sort(self, filter=True):
         """
         Gather all the frames and attempt to sort the markers into the rigid markers
@@ -184,11 +204,11 @@ class Markers(object):
             markers_keys.sort()
             markers = []
             for marker in markers_keys:
-
-                if filter:
-                    markers.append(self._filtered_markers[marker])
-                else:
-                    markers.append(self._raw_markers[marker])
+                if self._is_valid_marker(marker):
+                    if filter:
+                        markers.append(self._filtered_markers[marker])
+                    else:
+                        markers.append(self._raw_markers[marker])
             self._rigid_body[name] = markers
 
     def make_frame(self, _origin, _x, _y, _extra):
@@ -255,12 +275,12 @@ class Markers(object):
         Calculates all lower body joints automatically
         :return:
         """
-        self._joints["L_Hip"] = self.calc_l_hip()
-        self._joints["R_Hip"] = self.calc_r_hip()
-        self._joints["L_Knee"] = self.calc_l_knee()
-        self._joints["R_Knee"] = self.calc_r_knee()
-        self._joints["L_Ankle"] = self.calc_l_ankle()
-        self._joints["R_Ankle"] = self.calc_r_ankle()
+        (self._joints["L_Hip"], self._joints_rel["L_Hip"], self._joints_rel_child["L_Hip"]) = self.calc_l_hip()
+        (self._joints["R_Hip"], self._joints_rel["R_Hip"], self._joints_rel_child["R_Hip"]) = self.calc_r_hip()
+        (self._joints["L_Knee"], self._joints_rel["L_Knee"], self._joints_rel_child["L_Knee"]) = self.calc_l_knee()
+        (self._joints["R_Knee"], self._joints_rel["R_Knee"], self._joints_rel_child["R_Knee"]) = self.calc_r_knee()
+        (self._joints["L_Ankle"], self._joints_rel["L_Ankle"], self._joints_rel_child["L_Ankle"]) = self.calc_l_ankle()
+        (self._joints["R_Ankle"], self._joints_rel["R_Ankle"], self._joints_rel_child["R_Ankle"]) = self.calc_r_ankle()
 
     def get_joint(self, name):
         """
@@ -269,6 +289,27 @@ class Markers(object):
         :return: joint
         """
         return self._joints[name]
+
+    def get_joint_rel(self, name):
+        return self._joints_rel[name]
+
+    def get_joint_rel_child(self, name):
+        return self._joints_rel_child[name]
+
+    def set_joints(self, j):
+        self._joints = j
+
+    def get_joints(self):
+        return self._joints
+
+    def get_joints_rel(self):
+        return self._joints_rel
+
+    def get_joints_rel_child(self):
+        return self._joints_rel_child
+
+    def dist_joints(self, a, b):
+        return [dist(self.get_joint(a)[n], self.get_joint(b)[n]) for n in range(len(self._joints[a]))]
 
     def get_frame(self, name):
         """
@@ -286,6 +327,15 @@ class Markers(object):
         """
 
         return self._rigid_body[name]
+
+    def get_rigid_body_keys(self):
+        """
+
+        :param name: name of rigid body
+        :return: transformation of the rigid body
+        """
+
+        return self._rigid_body.keys()
 
     def calc_joint_center(self, parent_name, child_name, start, end):
         """
@@ -313,19 +363,20 @@ class Markers(object):
 
         return np.vstack((global_joint, [1])), axis, local_joint
 
-    def _calc_ball_joint(self, parent, child):
+    def _calc_ball_joint(self, parent, child_name):
         """
         Calculates the location of a ball joint between the parent and child rigid bodies.
         :param parent: Name of the parent rigid body (Ex: Root)
         :param child: Name of the child rigid body (Ex: L_Femur)
-        :return: 2D array of every position of the ball joint for every frame. Array at index frame is [x, y, z].
+        :return: Tuple where first element is (x,y,z) in global reference for all frames and second element is (x,y,z) in parent reference for all frames
         """
-        child = self.get_rigid_body(child)
+        child = self.get_rigid_body(child_name)
         parent_frame = self.get_frame(parent)
         frames = len(child[0])
 
         # Obtain the locations of the child markers relative to the Parent rigid body
-        child_by_parent = [[global_point_to_frame(parent_frame[n], child[i][n]) for n in range(frames)] for i in range(4)]
+        child_by_parent = [[global_point_to_frame(parent_frame[n], child[i][n]) for n in range(frames)] for i in
+                           range(4)]
         # Identical to child except for the difference in frame of reference
         # Points are accessed through child_by_parent[marker][frame]
 
@@ -335,20 +386,22 @@ class Markers(object):
         # By switching to the parent's reference frame, we can pretend as if the joint is stationary
 
         joint = []
+        joint_by_child = core.Point.point_to_vector(global_point_to_frame(
+            self.get_frame(child_name)[0], local_point_to_global(parent_frame[0], core.Point.vector_to_point(jointraw))))
         for n in range(frames):  # Convert back from the hip's frame to the global frame
             jointn_global = local_point_to_global(parent_frame[n], core.Point.vector_to_point(jointraw))
             joint.append([jointn_global.x, jointn_global.y, jointn_global.z])
 
-        return joint
+        return joint, jointraw, joint_by_child
 
-    def _calc_hinge_joint(self, parent, child):
+    def _calc_hinge_joint(self, parent, child_name):
         """
         Calculates the location of a hinge joint (i.e. a knee joint) between the parent and child rigid bodies
         :param parent: Name of the parent rigid body (Ex: L_Femur)
         :param child: Name of the child rigid body (Ex: L_Tibia)
         :return: 2D array of every position of the center of the hinge joint for every frame. Array at index frame is [x, y, z].
         """
-        child = self.get_rigid_body(child)
+        child = self.get_rigid_body(child_name)
         parent_frame = self.get_frame(parent)
         parent = self.get_rigid_body(parent)
 
@@ -379,12 +432,16 @@ class Markers(object):
             joint_by_parent.append(l_jointn_local)
 
         joint = []
+        joint_by_child = core.Point.point_to_vector(global_point_to_frame(
+            self.get_frame(child_name)[0], local_point_to_global(parent_frame[0], core.Point.vector_to_point(jointraw))))
         for n in range(frames):
             p = core.Point.Point(joint_by_parent[n].x[0], joint_by_parent[n].x[1], joint_by_parent[n].x[2])
             l_jointn_global = local_point_to_global(parent_frame[n], p)
             joint.append([l_jointn_global.x, l_jointn_global.y, l_jointn_global.z])
 
-        return joint
+        return joint, [[np.mean([joint_by_parent[n].x[0] for n in range(frames)])],
+                       [np.mean([joint_by_parent[n].x[1] for n in range(frames)])],
+                       [np.mean([joint_by_parent[n].x[2] for n in range(frames)])]], joint_by_child
 
     def calc_l_hip(self):
         """
@@ -432,11 +489,12 @@ class Markers(object):
         """
         return self._calc_ball_joint("R_Tibia", "R_Foot")
 
-    def play(self, joints=False, save=False, name="im"):
+    def play(self, joints=False, save=False, name="im", center=False):
         """
         play an animation of the         markers
         :param joints: opital param for joint centers
         :param save: bool to save the animation
+        :param center: bool to keep the markers centered
         :return: name of file
         """
 
@@ -444,35 +502,49 @@ class Markers(object):
         y_total = []
         z_total = []
         joints_points = []
-        fps = 100  # Frame per sec
+        fps = 10  # Frame per sec
         keys = self._filtered_markers.keys()
         nfr = len(self._filtered_markers[list(keys)[0]])  # Number of frames
+        root0z0 = self._filtered_markers["Root0"][0].z
 
         for frame in range(nfr):
             x = []
             y = []
             z = []
             for key in keys:
-                point = self._filtered_markers[key][frame]
-                x += [point.x]
-                y += [point.y]
-                z += [point.z]
-            x_total.append(x)
-            y_total.append(y)
-            z_total.append(z)
+                if self._is_valid_marker(key):
+                    point = self._filtered_markers[key][frame]
+                    if not center:
+                        x += [point.x]
+                        y += [point.y]
+                        z += [point.z]
+                    else:
+                        root0 = self._filtered_markers["Root0"][frame]
+                        x += [point.x - root0.x]
+                        y += [point.y - root0.y]
+                        z += [point.z - root0.z + root0z0]
+            if len(x) > 0:
+                x_total.append(x)
+                y_total.append(y)
+                z_total.append(z)
             x = []
             y = []
             z = []
             if joints:
                 for jointname, joint in self._joints.items():
-                    if frame < len(joint):
+                    f = frame
+                    if frame >= len(joint):
+                        f = len(joint) - 1
+
+                    if not center:
                         x.append(joint[frame][0])
                         y.append(joint[frame][1])
                         z.append(joint[frame][2])
                     else:
-                        x.append(joint[len(joint) - 1][0])
-                        y.append(joint[len(joint) - 1][1])
-                        z.append(joint[len(joint) - 1][2])
+                        root0 = self._filtered_markers["Root0"][frame]
+                        x.append(joint[frame][0] - root0.x)
+                        y.append(joint[frame][1] - root0.y)
+                        z.append(joint[frame][2] - root0.z + root0z0)
                 joints_points.append([x, y, z])
 
         self._fig = plt.figure()
@@ -552,6 +624,8 @@ def local_point_to_global(frame, local_point):
     return core.Point.vector_to_point(frame_to_global(frame, core.Point.point_to_vector(local_point)))
 
 
+def dist(x, y):
+    return ((x[0] - y[0])**2 + (x[1] - y[1])**2 + (x[2] - y[2])**2)**0.5
 
 def make_frame(markers):
     """
@@ -899,7 +973,7 @@ def get_distance(point1, point2):
     :param point2: secound point
     :return: distance between two Points
     """
-    return np.sum(np.sqrt(np.power(calc_vector_between_points(point1, point2), 2)))
+    return np.sqrt(np.sum(np.power((point1 - point2).toarray(),2) ))
 
 
 def R_to_axis_angle(matrix):
@@ -985,18 +1059,17 @@ def points_to_matrix(points):
     return cloud
 
 
-def get_rmse(marker_set, body):
+def get_rmse(marker_set, body, frame):
     """
     Get the RMSE of the transform and a body location
-    :param marker_set:
-    :param body:
+    :param marker_set: The location of the markers on the rigid body
+    :param body: The location of the markers in the global frame
+    :param frame: The frame to get the error
     :return:
     """
-    error = []
-    for frame in range(1000):
-        f = [body[0][frame], body[1][frame], body[2][frame], body[frame]]
-        T, err = Markers.cloud_to_cloud(marker_set, f)
-        error.append(err)
+    f = [body[0][frame], body[1][frame], body[2][frame], body[3][frame]]
+    T, err = cloud_to_cloud(marker_set, f)
+    return err
 
 
 def fit_to_plane(points):

@@ -44,16 +44,15 @@
 # //==============================================================================
 
 from . import Devices
-from GaitCore.Core import Point
+from GaitCore.Core import PointArray
 
 
 class Accel(Devices.Devices):
 
     def __init__(self, name, sensor):
-        self._accel = Point(self.sensor["ACCX"],
-                                self.sensor["ACCZ"],
-                                self.sensor["ACCY"])
-        super(Accel, self).__init__(name, sensor, "Accel")
+        accel = PointArray.PointArray(sensor["ACCX"]["data"],
+                            sensor["ACCY"]["data"],
+                            sensor["ACCZ"]["data"])
+        super(Accel, self).__init__(name, accel, "Accel")
 
-    def get(self):
-        return self._accel
+

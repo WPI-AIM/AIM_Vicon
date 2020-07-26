@@ -42,7 +42,7 @@
 #     \version   0.1
 # */
 # //==============================================================================
-
+import abc
 class Devices(object):
 
     def __init__(self, name, sensor, type, offest=20):
@@ -84,3 +84,6 @@ class Devices(object):
 
     def get_offset_index(self, dx):
         return dx * self.offset
+
+    def get_values(self):
+        return self._sensor
