@@ -50,6 +50,7 @@ import numpy as np
 from .Markers import ModelOutput as modeloutput
 from .Markers import Markers as markers
 from .Devices import EMG, IMU, Accel, ForcePlate
+import matplotlib.pyplot as plt
 from Vicon import Markers
 
 
