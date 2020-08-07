@@ -311,6 +311,13 @@ class Markers(object):
     def dist_joints(self, a, b):
         return [dist(self.get_joint(a)[n], self.get_joint(b)[n]) for n in range(len(self._joints[a]))]
 
+    def limb_len(self, a, b):
+        len_raw = self.dist_joints(a, b)
+        x = 0
+        for i in len_raw:
+            x += i
+        return x/len(len_raw)
+
     def get_frame(self, name):
         """
         get a frame
