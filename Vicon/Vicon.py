@@ -112,6 +112,8 @@ class Vicon(object):
         self._make_marker_trajs()
         self._make_model(verbose=verbose)
 
+    ## Finds the number and sets of frames
+    # @param col The column to search in
     def _find_number_of_frames(self, col):
         """
         Finds the number and sets of frames
@@ -128,18 +130,22 @@ class Vicon(object):
         self.number_of_frames = col[index - 1]
 
     @property
+    ## Returns the dataset's markers
     def markers(self):
         return self._markers
 
     @property
+    ## Returns the dataset's length
     def length(self):
         return self._length
 
     @length.setter
+    ## Sets the dataset's length
     def length(self, value):
         self._length = value
 
     @property
+    ## Returns the number of frames
     def number_of_frames(self):
         """
 
@@ -149,6 +155,7 @@ class Vicon(object):
         return self._number_of_frames
 
     @number_of_frames.setter
+    ## Sets the number of frames
     def number_of_frames(self, value):
         """
 
@@ -158,6 +165,7 @@ class Vicon(object):
         self._number_of_frames = value
 
     @property
+    ## Returns the Accels dictionary
     def accels(self):
         """
         Get the Accels dict
@@ -167,6 +175,7 @@ class Vicon(object):
         return self._accels
 
     @property
+    ## Returns the Force Plate dictionary
     def force_plate(self):
         """
          Get the force plate dict
@@ -176,6 +185,7 @@ class Vicon(object):
         return self._force_plates
 
     @property
+    ## Returns the IMU dictionary
     def IMUs(self):
         """
          Get the IMU dict
@@ -185,6 +195,7 @@ class Vicon(object):
         return self._IMUs
 
     @property
+    ## Returns the T EMG dictionary
     def T_EMGs(self):
         """
          Get the EMG dict
@@ -194,6 +205,7 @@ class Vicon(object):
         return self._T_EMGs
 
     @property
+    ## Returns the EMG dictionary
     def EMGs(self):
         """
         Get the EMGs dict
@@ -202,6 +214,7 @@ class Vicon(object):
         """
         return self._EMGs
 
+    ## Returns the model output
     def get_model_output(self):
         """
         get the model output
@@ -210,6 +223,7 @@ class Vicon(object):
         """
         return self._model_output
 
+    ## Returns the segments
     def get_segments(self):
         """
         get the segments
@@ -218,6 +232,7 @@ class Vicon(object):
         """
         return self.data_dict["Segments"]
 
+    ## Returns the keys to the segments dictionary
     def get_segments_keys(self):
         """
         get the segments
@@ -226,6 +241,7 @@ class Vicon(object):
         """
         return self.data_dict.keys()
 
+    ## Returns the markers
     def get_markers(self):
         """
         get the markers
@@ -234,6 +250,7 @@ class Vicon(object):
         """
         return self.markers
 
+    ## Returns the joints
     def get_joints(self):
         """
         get the joints
@@ -242,6 +259,7 @@ class Vicon(object):
         """
         return self.data_dict["Joints"]
 
+    ## Returns the keys to the joints dictionary
     def get_joints_keys(self):
         """
         get the joints keys
@@ -250,6 +268,8 @@ class Vicon(object):
         """
         return self.data_dict.keys()
 
+    ## Returns an IMU of specified index
+    # @param index The index of the IMU
     def get_imu(self, index):
         """
         get the a imu
