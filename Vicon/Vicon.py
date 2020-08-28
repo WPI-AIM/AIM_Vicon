@@ -53,9 +53,22 @@ from .Devices import EMG, IMU, Accel, ForcePlate
 import matplotlib.pyplot as plt
 from Vicon import Markers
 
+## @package Vicon
+# Reads motion capture data from a csv file.
 
+## @class Vicon
+# Object to read motion capture data
+#
+# Will read data from `file_path` on construction. May take a few seconds for large datasets!
 class Vicon(object):
 
+    ## Vicon constructor
+    # @param file_path The file to read from
+    # @param verbose Flag to enable status prints, defaults to False
+    # @param interpolate Flag to enable interpolating holes in data, defaults to True
+    # @param maxnanstotal Configures the maximum total missing data points that Vicon will attempt to interpolate
+    # @param maxnansrow Configures the maximum missing data points in a row that Vicon will attempt to interpolate
+    # @param sanitize Flag to replace any dataset consisting solely of NaNs with 0s, defaults to True
     def __init__(self, file_path, verbose=False, interpolate=True, maxnanstotal=-1, maxnansrow=-1, sanitize=True):
         self._file_path = file_path
         self.joint_names = ["Ankle", "Knee", "Hip"]
@@ -99,6 +112,8 @@ class Vicon(object):
         self._make_marker_trajs()
         self._make_model(verbose=verbose)
 
+    ## Finds the number and sets of frames
+    # @param col The column to search in
     def _find_number_of_frames(self, col):
         """
         Finds the number and sets of frames
@@ -115,18 +130,22 @@ class Vicon(object):
         self.number_of_frames = col[index - 1]
 
     @property
+    ## Returns the dataset's markers
     def markers(self):
         return self._markers
 
     @property
+    ## Returns the dataset's length
     def length(self):
         return self._length
 
     @length.setter
+    ## Sets the dataset's length
     def length(self, value):
         self._length = value
 
     @property
+    ## Returns the number of frames
     def number_of_frames(self):
         """
 
@@ -136,6 +155,7 @@ class Vicon(object):
         return self._number_of_frames
 
     @number_of_frames.setter
+    ## Sets the number of frames
     def number_of_frames(self, value):
         """
 
@@ -145,6 +165,7 @@ class Vicon(object):
         self._number_of_frames = value
 
     @property
+    ## Returns the Accels dictionary
     def accels(self):
         """
         Get the Accels dict
@@ -154,6 +175,7 @@ class Vicon(object):
         return self._accels
 
     @property
+    ## Returns the Force Plate dictionary
     def force_plate(self):
         """
          Get the force plate dict
@@ -163,6 +185,7 @@ class Vicon(object):
         return self._force_plates
 
     @property
+    ## Returns the IMU dictionary
     def IMUs(self):
         """
          Get the IMU dict
@@ -172,6 +195,7 @@ class Vicon(object):
         return self._IMUs
 
     @property
+    ## Returns the T EMG dictionary
     def T_EMGs(self):
         """
          Get the EMG dict
@@ -181,6 +205,7 @@ class Vicon(object):
         return self._T_EMGs
 
     @property
+    ## Returns the EMG dictionary
     def EMGs(self):
         """
         Get the EMGs dict
@@ -189,6 +214,7 @@ class Vicon(object):
         """
         return self._EMGs
 
+    ## Returns the model output
     def get_model_output(self):
         """
         get the model output
@@ -197,6 +223,7 @@ class Vicon(object):
         """
         return self._model_output
 
+    ## Returns the segments
     def get_segments(self):
         """
         get the segments
@@ -205,6 +232,7 @@ class Vicon(object):
         """
         return self.data_dict["Segments"]
 
+    ## Returns the keys to the segments dictionary
     def get_segments_keys(self):
         """
         get the segments
@@ -213,6 +241,7 @@ class Vicon(object):
         """
         return self.data_dict.keys()
 
+    ## Returns the markers
     def get_markers(self):
         """
         get the markers
@@ -221,6 +250,7 @@ class Vicon(object):
         """
         return self.markers
 
+    ## Returns the joints
     def get_joints(self):
         """
         get the joints
@@ -229,6 +259,7 @@ class Vicon(object):
         """
         return self.data_dict["Joints"]
 
+    ## Returns the keys to the joints dictionary
     def get_joints_keys(self):
         """
         get the joints keys
@@ -237,6 +268,8 @@ class Vicon(object):
         """
         return self.data_dict.keys()
 
+    ## Returns an IMU of specified index
+    # @param index The index of the IMU
     def get_imu(self, index):
         """
         get the a imu
@@ -736,6 +769,14 @@ class Vicon(object):
 
         return data
 
+    ## Function to graph a certain field of data
+    # @param category The category containing the data to be graphed
+    # @param subject The subject containing the data to be graphed
+    # @param field The field of the data to be graphed
+    # @param showinterpolated Flag to set whether interpolated data should be graphed, defaults to True
+    # @param colorinterpolated Flag to set whether interpolated data should be colored differently from normal data,
+    # defaults to True
+    # @param limits Configures the horizontal endpoints of the graph. A Tuple of the form `(start, end)`.
     def graph(self, category, subject, field, showinterpolated=True, colorinterpolated=True, limits=None):
         """Graphs the data specified. If showinterpolated is set to False, interpolated values will not be shown."""
         if not (category in self.data_dict and subject in self.data_dict[category] and field in
