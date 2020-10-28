@@ -122,13 +122,20 @@ is the inverse of ``global_point_to_frame``.
 ``Markers.get_transform_btw_two_frames(parent_frame, child_frame)`` returns the transformation matrix from the parent
 frame of reference to the child frame of reference.
 
-####Calculate Joint Locations
+####Defining and Calculating Joint Centers
 
-The ``calculate_joints`` function will automatically calculate all lower body joint locations.
-Once run, these joints can be accessed using the ``get_joint(name)`` method.
+The ``def_joint`` function allows the user to define their own joints with the rigid bodies in the data.
+``def_joint("r_hip", "hip", "r_femur")`` creates a joint named *r_hip* between the rigid bodies *hip* and *r_femur*.
 
-Joints are represented as their positions for every frame. ``get_joint(name)[frame]`` is an array
-which contains the [x, y, z] of the joint during that frame.
+The ``calculate_joints`` function will automatically calculate the positions of all defined joint locations.
+Additionally, joints may be calculated directly through the ``_calc_ball_joint`` and ``_calc_hinge_joint`` methods.
+
+Joint positions calculated through the ``calculate_joints`` function can be accessed using the ``get_joint(name)`` method.
+Joint positions are represented as a 2D array, consisting of the ``[x, y, z]`` position of a joint for each timestep.
+
+The joint position relative to the parent and child rigid bodies can be accessed through the ``get_joint_rel`` and
+``get_joint_rel_child`` methods, respectively. Each returns a 1D array of the ``[x, y, z]`` position of the joint center,
+relative to either the parent or child rigid body, in that rigid body's reference frame.
 
 ####Playing the Markers
 

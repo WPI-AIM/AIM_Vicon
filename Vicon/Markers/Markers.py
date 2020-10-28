@@ -60,7 +60,7 @@ class Markers(object):
     Creates an object to hold marker values
     """
 
-    def __init__(self, marker_dict):
+    def __init__(self, marker_dict, dat_name):
         """
 
         :param marker_dict: dict of markers
@@ -75,6 +75,8 @@ class Markers(object):
         self._joints = {}
         self._joints_rel = {}
         self._joints_rel_child = {}
+        self._balljoints_def = {}
+        self._hingejoints_def = {}
 
     @property
     def marker_names(self):
@@ -270,17 +272,23 @@ class Markers(object):
                         cloud_to_cloud(bodies[name], [value[0][ii], value[1][ii], value[2][ii], value[3][ii]])[0])
                 self.add_frame(name, frames)
 
+    def def_joint(self, name, parentBody, childBody, ballJoint=True):
+        if ballJoint:
+            self._balljoints_def[name] = [parentBody, childBody]
+        else:
+            self._hingejoints_def[name] = [parentBody, childBody]
+
     def calc_joints(self):
         """
-        Calculates all lower body joints automatically
+        Calculates all defined joints automatically
         :return:
         """
-        (self._joints["L_Hip"], self._joints_rel["L_Hip"], self._joints_rel_child["L_Hip"]) = self.calc_l_hip()
-        (self._joints["R_Hip"], self._joints_rel["R_Hip"], self._joints_rel_child["R_Hip"]) = self.calc_r_hip()
-        (self._joints["L_Knee"], self._joints_rel["L_Knee"], self._joints_rel_child["L_Knee"]) = self.calc_l_knee()
-        (self._joints["R_Knee"], self._joints_rel["R_Knee"], self._joints_rel_child["R_Knee"]) = self.calc_r_knee()
-        (self._joints["L_Ankle"], self._joints_rel["L_Ankle"], self._joints_rel_child["L_Ankle"]) = self.calc_l_ankle()
-        (self._joints["R_Ankle"], self._joints_rel["R_Ankle"], self._joints_rel_child["R_Ankle"]) = self.calc_r_ankle()
+
+        for name, bodies in self._balljoints_def.items():
+            (self._joints[name], self._joints_rel[name], self._joints_rel_child[name]) = self._calc_ball_joint(bodies[0], bodies[1])
+
+        for name, bodies in self._hingejoints_def.items():
+            (self._joints[name], self._joints_rel[name], self._joints_rel_child[name]) = self._calc_hinge_joint(bodies[0], bodies[1])
 
     def get_joint(self, name):
         """
@@ -449,52 +457,6 @@ class Markers(object):
         return joint, [[np.mean([joint_by_parent[n].x[0] for n in range(frames)])],
                        [np.mean([joint_by_parent[n].x[1] for n in range(frames)])],
                        [np.mean([joint_by_parent[n].x[2] for n in range(frames)])]], joint_by_child
-
-    def calc_l_hip(self):
-        """
-        Calculates the location of the left hip.
-        :return: 2D array representing the location of the joint through time.
-        """
-
-        return self._calc_ball_joint("Root", "L_Femur")
-
-    def calc_r_hip(self):
-        """
-        Calculates the location of the right hip.
-        :return: 2D array representing the location of the joint through time.
-        """
-
-        return self._calc_ball_joint("Root", "R_Femur")
-
-    def calc_l_knee(self):
-        """
-        Calculates the location of the left knee.
-        :return: 2D array representing the location of the joint through time.
-        """
-
-        return self._calc_hinge_joint("L_Femur", "L_Tibia")
-
-    def calc_r_knee(self):
-        """
-        Calculates the location of the right knee.
-        :return: 2D array representing the location of the joint through time.
-        """
-
-        return self._calc_hinge_joint("R_Femur", "R_Tibia")
-
-    def calc_l_ankle(self):
-        """
-        Calculates the location of the left ankle.
-        :return: 2D array representing the location of the joint through time.
-        """
-        return self._calc_ball_joint("L_Tibia", "L_Foot")
-
-    def calc_r_ankle(self):
-        """
-        Calculates the location of the right ankle.
-        :return: 2D array representing the location of the joint through time.
-        """
-        return self._calc_ball_joint("R_Tibia", "R_Foot")
 
     def play(self, joints=False, save=False, name="im", center=False):
         """
