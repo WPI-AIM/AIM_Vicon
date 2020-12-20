@@ -125,7 +125,7 @@ frame of reference to the child frame of reference.
 ####Defining and Calculating Joint Centers
 
 The ``def_joint`` function allows the user to define their own joints with the rigid bodies in the data.
-``def_joint("r_hip", "hip", "r_femur")`` creates a joint named *r_hip* between the rigid bodies *hip* and *r_femur*.
+``def_joint("r_hip", "hip", "r_femur", ballJoint=True)`` creates a ball joint named *r_hip* between the rigid bodies *hip* and *r_femur*.
 
 The ``calculate_joints`` function will automatically calculate the positions of all defined joint locations.
 Additionally, joints may be calculated directly through the ``_calc_ball_joint`` and ``_calc_hinge_joint`` methods.
