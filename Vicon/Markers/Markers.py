@@ -39,7 +39,9 @@
 #     \author    <http://www.aimlab.wpi.edu>
 #     \author    <nagoldfarb@wpi.edu>
 #     \author    Nathaniel Goldfarb
-#     \version   0.1
+#     \author    <ajlewis@wpi.edu>
+#     \author    Alek Lewis
+#     \version   0.2
 # */
 # //==============================================================================
 
@@ -51,6 +53,8 @@ from numpy import *
 from math import sqrt
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
+from pathlib import Path
+import csv, os
 
 import matplotlib.animation as animation
 
@@ -77,6 +81,7 @@ class Markers(object):
         self._joints_rel_child = {}
         self._balljoints_def = {}
         self._hingejoints_def = {}
+        self._dat_name = dat_name
 
     @property
     def marker_names(self):
@@ -273,22 +278,37 @@ class Markers(object):
                 self.add_frame(name, frames)
 
     def def_joint(self, name, parentBody, childBody, ballJoint=True):
+
+        try:
+            assert parentBody in self.get_rigid_body_keys()
+            assert childBody in self.get_rigid_body_keys()
+        except AssertionError:
+            raise ValueError("At least one specified rigid body is not present in this data!")
+
         if ballJoint:
             self._balljoints_def[name] = [parentBody, childBody]
         else:
             self._hingejoints_def[name] = [parentBody, childBody]
 
-    def calc_joints(self):
+    def calc_joints(self, try_load=True, verbose=False, strict=True):
         """
         Calculates all defined joints automatically
         :return:
         """
 
-        for name, bodies in self._balljoints_def.items():
-            (self._joints[name], self._joints_rel[name], self._joints_rel_child[name]) = self._calc_ball_joint(bodies[0], bodies[1])
+        if try_load and os.path.isfile(self._dat_name + "-joints.csv"):
+            self.read_joints(verbose=verbose, strict=strict)
+            if verbose:
+                print("Reading joints from file " + self._dat_name + "-joints.csv")
 
-        for name, bodies in self._hingejoints_def.items():
-            (self._joints[name], self._joints_rel[name], self._joints_rel_child[name]) = self._calc_hinge_joint(bodies[0], bodies[1])
+        else:
+            if verbose:
+                print("Manually calculating joints")
+            for name, bodies in self._balljoints_def.items():
+                (self._joints[name], self._joints_rel[name], self._joints_rel_child[name]) = self._calc_ball_joint(bodies[0], bodies[1])
+
+            for name, bodies in self._hingejoints_def.items():
+                (self._joints[name], self._joints_rel[name], self._joints_rel_child[name]) = self._calc_hinge_joint(bodies[0], bodies[1])
 
     def get_joint(self, name):
         """
@@ -318,6 +338,14 @@ class Markers(object):
 
     def dist_joints(self, a, b):
         return [dist(self.get_joint(a)[n], self.get_joint(b)[n]) for n in range(len(self._joints[a]))]
+
+    def body_rel_body(self, a, b, t):
+        return global_point_to_frame(self.get_frame(b)[t], local_point_to_global(self.get_frame(a)[t], core.Point.vector_to_point([[0], [0], [0]])))
+
+    def body_centroid(self, a, t):
+        pos = [self.get_rigid_body(a)[n][t] for n in range(4)]
+        pos = [[n.x, n.y, n.z] for n in pos]
+        return [avg([n[m] for n in pos]) for m in range(3)]
 
     def limb_len(self, a, b):
         len_raw = self.dist_joints(a, b)
@@ -552,6 +580,101 @@ class Markers(object):
         self._ax.scatter(x[frame], y[frame], z[frame], c='r', marker='o')
         if len(centers) > 0:
             self._ax.scatter(centers[frame][0], centers[frame][1], centers[frame][2], c='g', marker='o')
+
+    def save_joints(self, verbose=False, jlim=None, doBall=True, doHinge=True):
+        file_path = self._dat_name + "-joints.csv"
+        if verbose:
+            print("Saving joints data to " + file_path)
+
+        with open(file_path, "w", newline='') as f:
+            f.seek(0)
+            f.truncate()
+            writer = csv.writer(f)
+            writer.writerow(["Ball Joints"])
+            for name, bodies in self._balljoints_def.items():
+                if doBall and (jlim is None or (jlim is not None and name in jlim)):
+                    writer.writerow([name, bodies[0], bodies[1]])
+                    writer.writerow(["rel_parent"])
+                    writer.writerow([n[0] for n in self.get_joint_rel(name)])
+                    writer.writerow(["rel_child"])
+                    writer.writerow([n[0] for n in self.get_joint_rel_child(name)])
+                    writer.writerow(["pos", len(self.get_joint(name))])
+                    for timestep in self.get_joint(name):
+                        writer.writerow(timestep)
+            writer.writerow(["Hinge Joints"])
+            for name, bodies in self._hingejoints_def.items():
+                if doHinge and (jlim is None or (jlim is not None and name in jlim)):
+                    writer.writerow([name, bodies[0], bodies[1]])
+                    writer.writerow(["rel_parent"])
+                    writer.writerow([n[0] for n in self.get_joint_rel(name)])
+                    writer.writerow(["rel_child"])
+                    writer.writerow([n[0] for n in self.get_joint_rel_child(name)])
+                    writer.writerow(["pos", len(self.get_joint(name))])
+                    for timestep in self.get_joint(name):
+                        writer.writerow(timestep)
+
+    def read_joints(self, filename=None, verbose=False, strict=False):
+        if filename is None:
+            filename = self._dat_name + "-joints.csv"
+
+        if verbose:
+            print("Reading joint data from " + filename)
+
+        with open(filename, "r", newline='') as f:
+            reader = csv.reader(f)
+            next(reader)
+            while True:
+                try:
+                    name, parent, child = next(reader)
+                except ValueError:
+                    break
+                if parent not in self.get_rigid_body_keys() or child not in self.get_rigid_body_keys():
+                    if strict:
+                        raise ValueError("A rigid body present in this file isn't present in this spreadsheet!")
+                    if verbose:
+                        print("WARNING: A rigid body present in this file isn't present in this spreadsheet!")
+                if verbose:
+                    print("Detected ball joint " + name)
+
+                self._balljoints_def[name] = [parent, child]
+                next(reader)
+                self._joints_rel[name] = [[float(n)] for n in next(reader)]
+                next(reader)
+                self._joints_rel_child[name] = [[float(n)] for n in next(reader)]
+
+                self._joints[name] = []
+                l = int(next(reader)[1])
+                for i in range(l):
+                    self._joints[name].append([float(n) for n in next(reader)])
+
+            while True:
+                try:
+                    name, parent, child = next(reader)
+                except:
+                    break
+                if parent not in self.get_rigid_body_keys() or child not in self.get_rigid_body_keys():
+                    if strict:
+                        raise ValueError("A rigid body present in this file isn't present in this spreadsheet!")
+                    if verbose:
+                        print("WARNING: A rigid body present in this file isn't present in this spreadsheet!")
+                if verbose:
+                    print("Detected hinge joint " + name)
+
+                self._hingejoints_def[name] = [parent, child]
+                next(reader)
+                self._joints_rel[name] = [[float(n)] for n in next(reader)]
+                next(reader)
+                self._joints_rel_child[name] = [[float(n)] for n in next(reader)]
+
+                self._joints[name] = []
+                l = int(next(reader)[1])
+                for i in range(l):
+                    self._joints[name].append([float(n) for n in next(reader)])
+
+
+def avg(n):
+    return sum(n)/len(n)
+
 
 
 def transform_markers(transforms, markers):
