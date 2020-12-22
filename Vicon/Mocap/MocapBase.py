@@ -53,9 +53,9 @@ from .Markers import Markers as markers
 from .Devices import EMG, IMU, Accel, ForcePlate
 import matplotlib.pyplot as plt
 from Vicon import Markers
-from .Markers import Interpolation
+from .Interpolation import Interpolation
 import abc
-
+from .Interpolation import Akima
 class MocapBase(object):
 
     def __init__(self, file_path, verbose=False, interpolate=True, maxnanstotal=-1, maxnansrow=-1, sanitize=True):
@@ -66,8 +66,29 @@ class MocapBase(object):
         self._maxnansrow = maxnansrow
         self._sanitize = sanitize
         self._number_of_frames = 0
+        self._nan_dict = {}
+        self.my_marker_interpolation = Akima.Akima
+        #  sanitized is a dictionary to keep track of what subject, if any, have had their fields sanitized
+        #  If sanitized[category][subject] exists, that subject has had at least one field sanitized
+        self._sanitized = {}
         self.data_dict = self.open_file(self._file_path, verbose=verbose, interpolate=interpolate,
                                               maxnanstotal=maxnanstotal, maxnansrow=maxnansrow, sanitize=sanitize)
+
+    @abc.abstractmethod
+    def open_file(self, file_path, verbose=False, interpolate=True, maxnanstotal=-1, maxnansrow=-1,
+                        sanitize=True):
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def _seperate_csv_sections(self, all_data):
+        raise NotImplementedError
+
+
+    @abc.abstractmethod
+
+    def _extract_values(self, raw_data, start, end, verbose=False, category="", interpolate=True, maxnanstotal=-1,
+                    maxnansrow=-1, sanitize=True):
+        raise NotImplementedError
 
     def _find_number_of_frames(self, col):
         """
@@ -192,3 +213,159 @@ class MocapBase(object):
     def _len_data(self, category):
         """Returns the length of the data section of a given category"""
         return len(next(next(self.data_dict[category].itervalues()).itervalues())["data"])
+
+
+    def is_sanitized(self, category, subject):
+        if category not in self._sanitized:
+            return False
+        for x in self._sanitized[category]:
+            if subject in x:
+                return True
+        return False
+
+    def graph(self, category, subject, field, showinterpolated=True, colorinterpolated=True, limits=None):
+        """Graphs the data specified. If showinterpolated is set to False, interpolated values will not be shown."""
+        if not (category in self.data_dict and subject in self.data_dict[category] and field in
+                self.data_dict[category][subject]):
+            return  # We don't have any data for this field!
+        interpolated = True in self._nan_dict[category][subject][field]
+        if not interpolated or (not colorinterpolated and showinterpolated):  # Simplest case - just graph the data
+            plt.plot(self.data_dict[category][subject][field]["data"])
+            plt.xlabel("Frame")
+            plt.ylabel(self.data_dict[category][subject][field]["unit"])
+            plt.title("Data in category " + category + ", in subject " + subject + ", in field " + field)
+            if limits is not None:
+                plt.xlim(limits)
+            plt.show()
+        else:
+            nans = self._nan_dict[category][subject][field]
+            data = self.data_dict[category][subject][field]["data"]
+
+            orgdatablocks = []
+            interdatablocks = []
+            orgtemp = []
+            intertemp = []
+            for i in range(len(nans)):
+                if nans[i]:
+                    if len(orgtemp) > 0:
+                        orgdatablocks.append(orgtemp)
+                        orgtemp = []
+                    intertemp.append(i)
+                else:
+                    if len(intertemp) > 0:
+                        interdatablocks.append(intertemp)
+                        intertemp = []
+                    orgtemp.append(i)
+            if len(orgtemp) > 0:
+                orgdatablocks.append(orgtemp)
+            if len(intertemp) > 0:
+                interdatablocks.append(intertemp)
+
+            flagorg = True
+            for blk in orgdatablocks:
+                if flagorg:
+                    plt.plot(blk, data[blk[0]:blk[len(blk) - 1] + 1], "C0", label="Original Data")
+                    flagorg = False
+                else:
+                    plt.plot(blk, data[blk[0]:blk[len(blk) - 1] + 1], "C0")
+
+            if showinterpolated:
+                flagint = True
+                for blk in interdatablocks:
+                    if flagint:
+                        plt.plot([blk[0]-1] + blk + [blk[len(blk) - 1] + 1], data[blk[0]-1:blk[len(blk) - 1] + 2], "C1", label="Interpolated Data")
+                        flagint = False
+                    else:
+                        plt.plot([blk[0]-1] + blk + [blk[len(blk) - 1] + 1], data[blk[0]-1:blk[len(blk) - 1] + 2], "C1")
+                plt.legend()
+
+            plt.xlabel("Frame")
+            plt.ylabel(self.data_dict[category][subject][field]["unit"])
+            plt.title("Data in category " + category + ", in subject " + subject + ", in field " + field)
+            if limits is not None:
+                plt.xlim(limits)
+            plt.show()
+
+    def _marker_interpolation(self, value, key, naninfo, category, interpolate, sanitize, verbose):
+        ### OLD NOT USED
+        #  If we have NaNs and the whole row isn't NaNs...
+        #  No interpolation method can do anything with an array of NaNs,
+        #  so this way we save ourselves a bit of computation
+
+        nans = np.isnan(value["X"]["data"])
+        if True in nans and False in nans and interpolate and naninfo[key]["X"]["interpolate"]:
+            if category not in self._nan_dict:
+                self._nan_dict[category] = {}
+            if key not in self._nan_dict[category]:
+                self._nan_dict[category][key] = {}
+            self._nan_dict[category][key]["X"] = nans
+            self._nan_dict[category][key]["Y"] = nans
+            self._nan_dict[category][key]["Z"] = nans
+            if verbose:
+                print("Interpolating missing values in field X Y Z" + ", in subject " + key + \
+                      ", in category " + category + "...")
+            # x, y, z = Interpolation.velocity_method(value["X"]["data"], value["Y"]["data"], value["Z"]["data"])
+            # value["X"]["data"] = Interpolation.akmia(value["X"], verbose, category, "X", key)
+            # value["Y"]["data"] = Interpolation.akmia(value["X"], verbose, category, "X", key)
+            # value["Z"]["data"] = Interpolation.akmia(value["X"], verbose, category, "X", key)
+        else:
+            for sub_key, sub_value in value.items():  # For each field under each subject...
+                nans = np.isnan(sub_value["data"])
+                if False not in nans:
+                    if verbose:
+                        print("Could not interpolate field " + sub_key + ", in subject " + key + \
+                              ", in category " + category + ", as all values were nans!")
+                    if sanitize and sub_key != "":
+                        sub_value["data"] = [0 for i in range(len(sub_value["data"]))]
+                        if verbose:
+                            print("Sanitizing field with all 0s...")
+                        if category not in self._sanitized:
+                            self._sanitized[category] = []
+                        if key not in self._sanitized[category]:
+                            self._sanitized[category].append(key)
+                if category not in self._nan_dict:
+                    self._nan_dict[category] = {}
+                if key not in self._nan_dict[category]:
+                    self._nan_dict[category][key] = {}
+                self._nan_dict[category][key][sub_key] = self._false_of_n(len(sub_value["data"]))
+
+
+    def set_marker_interpolation(self, method):
+        assert issubclass(method, Interpolation.Interpolation)
+        self.my_marker_interpolation = method
+
+    def _interpolation(self, value, key, naninfo, category, interpolate, sanitize, verbose):
+        for sub_key, sub_value in value.items():  # For each field under each subject...
+            #  If we have NaNs and the whole row isn't NaNs...
+            #  No interpolation method can do anything with an array of NaNs,
+            #  so this way we save ourselves a bit of computation
+            nans = np.isnan(sub_value["data"])
+            if True in nans and False in nans  and naninfo[key][sub_key]["interpolate"]:
+                if category not in self._nan_dict:
+                    self._nan_dict[category] = {}
+                if key not in self._nan_dict[category]:
+                    self._nan_dict[category][key] = {}
+                self._nan_dict[category][key][sub_key] = nans
+                if verbose:
+                    print("Interpolating missing values in field " + sub_key + ", in subject " + key + \
+                          ", in category " + category + "...")
+                if interpolate:
+                    sub_value["data"] = Interpolation.akmia(sub_value, verbose, category, sub_key, key)
+            else:
+                if False not in nans:
+                    if verbose:
+                        print("Could not interpolate field " + sub_key + ", in subject " + key + \
+                              ", in category " + category + ", as all values were nans!")
+                    if sanitize and sub_key != "":
+                        sub_value["data"] = [0 for i in range(len(sub_value["data"]))]
+                        if verbose:
+                            print("Sanitizing field with all 0s...")
+                        if category not in self._sanitized:
+                            self._sanitized[category] = []
+                        if key not in self._sanitized[category]:
+                            self._sanitized[category].append(key)
+                if category not in self._nan_dict:
+                    self._nan_dict[category] = {}
+                if key not in self._nan_dict[category]:
+                    self._nan_dict[category][key] = {}
+                self._nan_dict[category][key][sub_key] = self._false_of_n(len(sub_value["data"]))
