@@ -47,16 +47,17 @@ from typing import List, Any
 
 import pandas
 import numpy as np
-from .Markers import ModelOutput as modeloutput
-from .Markers import Markers as markers
-from .Devices import EMG, IMU, Accel, ForcePlate
+from Vicon.Markers import ModelOutput as modeloutput
+from Vicon.Markers import Markers as markers
+from Vicon.Devices import EMG, IMU, Accel, ForcePlate
 import matplotlib.pyplot as plt
 from Vicon import Markers
-
-
-class Vicon(object):
+from Vicon.Markers import Interpolation
+from . import MocapBase
+class Vicon(MocapBase.MocapBase):
 
     def __init__(self, file_path, verbose=False, interpolate=True, maxnanstotal=-1, maxnansrow=-1, sanitize=True):
+        super(Vicon, self).__init__(file_path, verbose, interpolate, maxnanstotal, maxnansrow, sanitize)
         self._file_path = file_path
         self.joint_names = ["Ankle", "Knee", "Hip"]
         self._number_of_frames = 0
@@ -66,23 +67,6 @@ class Vicon(object):
         self._IMUs = {}
         self._accels = {}
 
-        #  nan_dict is a dictionary with the same format of data_dict,
-        #  but it keeps track of the positions of nans that get interpolated.
-
-        #  data is accessed through nan_dict[category][subject][field],
-        #  where nan_dict contains category iff there is at least one valid subject for the category,
-        #  nan_dict[category] contains subject iff there is at least one valid field for the subject, and
-        #  nan_dict[category][subject] contains field iff data_dict[category][subject][field]["data"] exists.
-
-        #  nan_dict[category][subject][field] is a boolean array where
-        #  nan_dict[category][subject][field] = np.isnan(data_dict[category][subject][field]["data"])
-        #  or, nan_dict[category][subject][field][n] = np.isnan(data_dict[category][subject][field]["data"][n])
-        #  iff data_dict[category][subject][field]["data"] contained missing values that were interpolated.
-
-        #  if data_dict[category][subject][field]["data"] did not contain any missing values,
-        #  or if data_dict[category][subject][field]["data"] consisted solely of nans,
-        #  nan_dict[category][subject][field] is an array consisting only of False,
-        #  where len(nan_dict[category][subject][field]) = len(data_dict[category][subject][field]["data"])
 
         self._nan_dict = {}
 
@@ -98,51 +82,6 @@ class Vicon(object):
         self._make_IMUs(verbose=verbose)
         self._make_marker_trajs()
         self._make_model(verbose=verbose)
-
-    def _find_number_of_frames(self, col):
-        """
-        Finds the number and sets of frames
-        :param col: column to search in
-        :return: None
-        """
-        index = col.index("Frame") + 2
-        current_number = col[index]
-
-        while current_number.isdigit():
-            index += 1
-            current_number = col[index]
-
-        self.number_of_frames = col[index - 1]
-
-    @property
-    def markers(self):
-        return self._markers
-
-    @property
-    def length(self):
-        return self._length
-
-    @length.setter
-    def length(self, value):
-        self._length = value
-
-    @property
-    def number_of_frames(self):
-        """
-
-        :return: number of frames
-        :rtype: int
-        """
-        return self._number_of_frames
-
-    @number_of_frames.setter
-    def number_of_frames(self, value):
-        """
-
-        :param value:
-        :return:
-        """
-        self._number_of_frames = value
 
     @property
     def accels(self):
@@ -692,6 +631,8 @@ class Vicon(object):
                 #  If we have NaNs and the whole row isn't NaNs...
                 #  No interpolation method can do anything with an array of NaNs,
                 #  so this way we save ourselves a bit of computation
+                print(sub_key)
+                print(sub_value)
                 nans = np.isnan(sub_value["data"])
                 if True in nans and False in nans and interpolate and naninfo[key][sub_key]["interpolate"]:
                     if category not in self._nan_dict:
@@ -702,19 +643,21 @@ class Vicon(object):
                     if verbose:
                         print("Interpolating missing values in field " + sub_key + ", in subject " + key + \
                               ", in category " + category + "...")
-                    s = pandas.Series(sub_value["data"])
-                    #  Akima interpolation only covers interior NaNs,
-                    #  and splines are *way* too imprecise with unset boundary conditions,
-                    #  so linear interpolation is used for unset values at the edges
-                    try:
-                        s = s.interpolate(method='akima', limit_direction='both')
-                    except ValueError:
-                        if verbose:
-                            print("Akima Interpolation failed for field " + sub_key + ", in subject " + key + \
-                                  ", in category " + category + "!")
-                            print("Falling back to linear interpolation...")
-                    s = s.interpolate(method='linear', limit_direction='both')
-                    sub_value["data"] = s.to_list()
+
+                    sub_value["data"] = Interpolation.akmia(sub_value, verbose, category, sub_key, key)
+                    # s = pandas.Series(sub_value["data"])
+                    # #  Akima interpolation only covers interior NaNs,
+                    # #  and splines are *way* too imprecise with unset boundary conditions,
+                    # #  so linear interpolation is used for unset values at the edges
+                    # try:
+                    #     s = s.interpolate(method='akima', limit_direction='both')
+                    # except ValueError:
+                    #     if verbose:
+                    #         print("Akima Interpolation failed for field " + sub_key + ", in subject " + key + \
+                    #               ", in category " + category + "!")
+                    #         print("Falling back to linear interpolation...")
+                    # s = s.interpolate(method='linear', limit_direction='both')
+                    # sub_value["data"] = s.to_list()
                 else:
                     if False not in nans:
                         if verbose:
