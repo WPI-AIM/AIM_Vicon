@@ -334,7 +334,7 @@ class MocapBase(object):
         assert issubclass(method, Interpolation.Interpolation)
         self.my_marker_interpolation = method
 
-    def _interpolation(self, value, key, naninfo, category, interpolate, sanitize, verbose):
+    def _prepare_interpolation(self, value, key, naninfo, category, interpolate, sanitize, verbose):
         for sub_key, sub_value in value.items():  # For each field under each subject...
             #  If we have NaNs and the whole row isn't NaNs...
             #  No interpolation method can do anything with an array of NaNs,

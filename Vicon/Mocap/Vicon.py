@@ -588,9 +588,9 @@ class Vicon(MocapBase.MocapBase):
             #ingnore if it is the marker data, use the custom function set by the user
             if category == "Trajectories" and not ("Magnitude( X )" in value.keys()) and not ("Count" in value.keys()):
 
-                self._interpolation(value, key, naninfo, category, False, sanitize, verbose)
+                self._prepare_interpolation(value, key, naninfo, category, False, sanitize, verbose)
             else:
-                self._interpolation(value, key, naninfo, category, interpolate, sanitize, verbose)
+                self._prepare_interpolation(value, key, naninfo, category, interpolate, sanitize, verbose)
 
         if category == "Trajectories":
             my_interpolate = self._marker_interpolation(data)
