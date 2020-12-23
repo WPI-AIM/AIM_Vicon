@@ -44,15 +44,15 @@
 # //==============================================================================
 import csv
 from typing import List, Any
-
+from ..Interpolation import Akmia
 import numpy as np
 from Vicon.Markers import ModelOutput as modeloutput
 from Vicon.Devices import EMG, IMU, Accel, ForcePlate
 from . import MocapBase
 class Vicon(MocapBase.MocapBase):
 
-    def __init__(self, file_path, verbose=False, interpolate=True, maxnanstotal=-1, maxnansrow=-1, sanitize=True):
-        super(Vicon, self).__init__(file_path, verbose, interpolate, maxnanstotal, maxnansrow, sanitize)
+    def __init__(self, file_path, verbose=False, interpolate=True, maxnanstotal=-1, maxnansrow=-1, sanitize=True,inerpolation_method=Akmia.Akmia):
+        super(Vicon, self).__init__(file_path, verbose, interpolate, maxnanstotal, maxnansrow, sanitize,inerpolation_method)
         self._file_path = file_path
         self.joint_names = ["Ankle", "Knee", "Hip"]
         self._number_of_frames = 0
@@ -69,14 +69,18 @@ class Vicon(MocapBase.MocapBase):
         #  If sanitized[category][subject] exists, that subject has had at least one field sanitized
         self._sanitized = {}
 
-        self.data_dict = self.open_file(self._file_path, verbose=verbose, interpolate=interpolate,
-                                              maxnanstotal=maxnanstotal, maxnansrow=maxnansrow, sanitize=sanitize)
-        self._make_Accelerometers(verbose=verbose)
-        self._make_EMGs(verbose=verbose)
-        self._make_force_plates(verbose=verbose)
-        self._make_IMUs(verbose=verbose)
+        self.parse()
+
+    def parse(self):
+
+        self.data_dict = self.open_file(self._file_path, verbose=self._verbose, interpolate=self.interpolate,
+                                              maxnanstotal=self._maxanstotal, maxnansrow=self._maxnansrow, sanitize=self.sanitize)
+        self._make_Accelerometers(verbose=self._verbose)
+        self._make_EMGs(verbose=self._verbose)
+        self._make_force_plates(verbose=self._verbose)
+        self._make_IMUs(verbose=self._verbose)
         self._make_marker_trajs()
-        self._make_model(verbose=verbose)
+        self._make_model(verbose=self._verbose)
 
     @property
     def accels(self):

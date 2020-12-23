@@ -58,21 +58,25 @@ import abc
 from ..Interpolation import Akmia
 class MocapBase(object):
 
-    def __init__(self, file_path, verbose=False, interpolate=True, maxnanstotal=-1, maxnansrow=-1, sanitize=True):
+    def __init__(self, file_path, verbose=False, interpolate=True, maxnanstotal=-1, maxnansrow=-1, sanitize=True, inerpolation_method=Akmia.Akmia):
         self._file_path = file_path
         self._verbose = verbose
         self._interpolate = interpolate
-        self._maxanstotal=-1
+        self._maxanstotal = maxnanstotal
         self._maxnansrow = maxnansrow
         self._sanitize = sanitize
         self._number_of_frames = 0
         self._nan_dict = {}
-        self.my_marker_interpolation = Akmia.Akmia
+        self.my_marker_interpolation = inerpolation_method
         #  sanitized is a dictionary to keep track of what subject, if any, have had their fields sanitized
         #  If sanitized[category][subject] exists, that subject has had at least one field sanitized
         self._sanitized = {}
-        self.data_dict = self.open_file(self._file_path, verbose=verbose, interpolate=interpolate,
-                                              maxnanstotal=maxnanstotal, maxnansrow=maxnansrow, sanitize=sanitize)
+        # self.data_dict = self.open_file(self._file_path, verbose=verbose, interpolate=interpolate,
+        #                                       maxnanstotal=maxnanstotal, maxnansrow=maxnansrow, sanitize=sanitize)
+
+    @abc.abstractmethod
+    def parse(self):
+        raise NotImplementedError
 
     @abc.abstractmethod
     def open_file(self, file_path, verbose=False, interpolate=True, maxnanstotal=-1, maxnansrow=-1,
@@ -85,7 +89,6 @@ class MocapBase(object):
 
 
     @abc.abstractmethod
-
     def _extract_values(self, raw_data, start, end, verbose=False, category="", interpolate=True, maxnanstotal=-1,
                     maxnansrow=-1, sanitize=True):
         raise NotImplementedError
