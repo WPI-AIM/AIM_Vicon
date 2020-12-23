@@ -69,14 +69,18 @@ class Vicon(MocapBase.MocapBase):
         #  If sanitized[category][subject] exists, that subject has had at least one field sanitized
         self._sanitized = {}
 
-        self.data_dict = self.open_file(self._file_path, verbose=verbose, interpolate=interpolate,
-                                              maxnanstotal=maxnanstotal, maxnansrow=maxnansrow, sanitize=sanitize)
-        self._make_Accelerometers(verbose=verbose)
-        self._make_EMGs(verbose=verbose)
-        self._make_force_plates(verbose=verbose)
-        self._make_IMUs(verbose=verbose)
+        self.parse()
+
+    def parse(self):
+
+        self.data_dict = self.open_file(self._file_path, verbose=self._verbose, interpolate=self.interpolate,
+                                              maxnanstotal=self._maxanstotal, maxnansrow=self._maxnansrow, sanitize=self.sanitize)
+        self._make_Accelerometers(verbose=self._verbose)
+        self._make_EMGs(verbose=self._verbose)
+        self._make_force_plates(verbose=self._verbose)
+        self._make_IMUs(verbose=self._verbose)
         self._make_marker_trajs()
-        self._make_model(verbose=verbose)
+        self._make_model(verbose=self._verbose)
 
     @property
     def accels(self):
