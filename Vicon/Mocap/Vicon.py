@@ -594,7 +594,7 @@ class Vicon(MocapBase.MocapBase):
 
         if category == "Trajectories":
             my_interpolate = self._marker_interpolation(data)
-            my_interpolate.interpolate(naninfo, sanitize, verbose)
+            my_interpolate.interpolate(verbose)
 
         return data
 
