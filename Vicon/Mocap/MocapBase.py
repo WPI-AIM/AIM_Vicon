@@ -48,14 +48,14 @@ from typing import List, Any
 
 import pandas
 import numpy as np
-from .Markers import ModelOutput as modeloutput
-from .Markers import Markers as markers
-from .Devices import EMG, IMU, Accel, ForcePlate
+from ..Markers import ModelOutput as modeloutput
+from ..Markers import Markers as markers
+from ..Devices import EMG, IMU, Accel, ForcePlate
 import matplotlib.pyplot as plt
 from Vicon import Markers
-from .Interpolation import Interpolation
+from ..Interpolation import Interpolation
 import abc
-from .Interpolation import Akima
+from ..Interpolation import Akmia
 class MocapBase(object):
 
     def __init__(self, file_path, verbose=False, interpolate=True, maxnanstotal=-1, maxnansrow=-1, sanitize=True):
@@ -67,7 +67,7 @@ class MocapBase(object):
         self._sanitize = sanitize
         self._number_of_frames = 0
         self._nan_dict = {}
-        self.my_marker_interpolation = Akima.Akima
+        self.my_marker_interpolation = Akmia.Akmia
         #  sanitized is a dictionary to keep track of what subject, if any, have had their fields sanitized
         #  If sanitized[category][subject] exists, that subject has had at least one field sanitized
         self._sanitized = {}
@@ -340,7 +340,7 @@ class MocapBase(object):
             #  No interpolation method can do anything with an array of NaNs,
             #  so this way we save ourselves a bit of computation
             nans = np.isnan(sub_value["data"])
-            if True in nans and False in nans  and naninfo[key][sub_key]["interpolate"]:
+            if True in nans and False in nans and naninfo[key][sub_key]["interpolate"]:
                 if category not in self._nan_dict:
                     self._nan_dict[category] = {}
                 if key not in self._nan_dict[category]:

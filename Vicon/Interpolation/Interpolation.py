@@ -21,11 +21,7 @@ class Interpolation(object):
         raise NotImplementedError
 
 
-
-
-
-
-def akmia(sub_value, verbose, category,sub_key, key ):
+def akmia(sub_value, verbose, category, sub_key, key ):
     s = pandas.Series(sub_value["data"])
     #  Akima interpolation only covers interior NaNs,
     #  and splines are *way* too imprecise with unset boundary conditions,
@@ -39,9 +35,6 @@ def akmia(sub_value, verbose, category,sub_key, key ):
             print("Falling back to linear interpolation...")
     s = s.interpolate(method='linear', limit_direction='both')
     return s.to_list()
-
-
-
 
 
 if __name__ == '__main__':
