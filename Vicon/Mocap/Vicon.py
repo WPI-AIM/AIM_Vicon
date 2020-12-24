@@ -271,7 +271,7 @@ class Vicon(MocapBase.MocapBase):
         """
         return self._T_EMGs.keys()
 
-    def get_all_t_emg(self, index):
+    def get_all_t_emg(self):
         """
         Get the T EMG values
         :param index: number of sensor
