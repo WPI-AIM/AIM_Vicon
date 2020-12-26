@@ -54,7 +54,6 @@ class Vicon(MocapBase.MocapBase):
     def __init__(self, file_path, verbose=False, interpolate=True, maxnanstotal=-1, maxnansrow=-1, sanitize=True,inerpolation_method=Akmia.Akmia):
         super(Vicon, self).__init__(file_path, verbose, interpolate, maxnanstotal, maxnansrow, sanitize,inerpolation_method)
         self._file_path = file_path
-        self.joint_names = ["Ankle", "Knee", "Hip"]
         self._number_of_frames = 0
         self._T_EMGs = {}
         self._EMGs = {}
@@ -286,7 +285,7 @@ class Vicon(MocapBase.MocapBase):
         :return:
         """
         if "Model Outputs" in self.data_dict:
-            self._model_output = modeloutput.ModelOutput(self.data_dict["Model Outputs"], self.joint_names)
+            self._model_output = modeloutput.ModelOutput(self.data_dict["Model Outputs"])
             if verbose:
                 print("Model Outputs generated")
         elif verbose:

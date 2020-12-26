@@ -44,14 +44,14 @@
 # //==============================================================================
 
 from GaitCore import Core as core
-from GaitCore.Bio.Leg import Leg
+from GaitCore.Bio.Leg import Leg,Arm,Trunk
 from GaitCore.Bio.Joint import Joint
 
 class ModelOutput(object):
 
-    def __init__(self, data, joint_name):
+    def __init__(self, data):
 
-        self.joint_names = joint_name
+        self.joint_names = ["Hip", "Knee", "Ankle", "Head", "Thorax", "Neck", "Shoulder", "Pelvis", "Spine", "Wrist"]
         left_joints = {}
         right_joints = {}
 
@@ -84,6 +84,12 @@ class ModelOutput(object):
         self._left_leg = Leg(left_joints["Hip"], left_joints["Knee"], left_joints["Ankle"])
         self._right_leg = Leg(right_joints["Hip"], right_joints["Knee"], right_joints["Ankle"])
 
+        self._left_arm = Arm(left_joints["Shoulder"], left_joints["Elbow"], left_joints["Wrist"])
+        self._right_arm = Arm(right_joints["Shoulder"], right_joints["Elbow"], right_joints["Wrist"])
+
+        self._left_trunk = Trunk(left_joints["Head"], left_joints["Spine"], left_joints["Thorax"], left_joints["Plevis"] )
+        self._right_trunk = Trunk(right_joints["Head"], right_joints["Spine"], right_joints["Thorax"], right_joints["Plevis"] )
+
     def get_right_leg(self):
         """
 
@@ -98,3 +104,30 @@ class ModelOutput(object):
         """
         return self._left_leg
 
+    def get_right_arm(self):
+        """
+
+        :return:
+        """
+        return self._right_arm
+
+    def get_left_arm(self):
+        """
+
+        :return:
+        """
+        return self._left_arm
+    
+    def get_right_trunk(self):
+        """
+
+        :return:
+        """
+        return self._right_trunk
+
+    def get_left_trunk(self):
+        """
+
+        :return:
+        """
+        return self._left_trunk
