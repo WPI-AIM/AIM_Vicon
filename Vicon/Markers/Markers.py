@@ -486,14 +486,17 @@ class Markers(object):
                        [np.mean([joint_by_parent[n].x[1] for n in range(frames)])],
                        [np.mean([joint_by_parent[n].x[2] for n in range(frames)])]], joint_by_child
 
-    def play(self, joints=False, save=False, name="im", center=False):
+    def play(self, joints=False, save=False, name="im", center=False, centerPoint=None):
         """
-        play an animation of the         markers
-        :param joints: opital param for joint centers
+        play an animation of the markers
+        :param joints: bool to display calculated joint centers
         :param save: bool to save the animation
         :param center: bool to keep the markers centered
         :return: name of file
         """
+
+        if center and centerPoint is None:
+            raise ValueError("Must specify the marker to center on!")
 
         x_total = []
         y_total = []
@@ -502,7 +505,7 @@ class Markers(object):
         fps = 10  # Frame per sec
         keys = self._filtered_markers.keys()
         nfr = len(self._filtered_markers[list(keys)[0]])  # Number of frames
-        root0z0 = self._filtered_markers["Root0"][0].z
+        root0z0 = self._filtered_markers[centerPoint][0].z
 
         for frame in range(nfr):
             x = []
@@ -516,7 +519,7 @@ class Markers(object):
                         y += [point.y]
                         z += [point.z]
                     else:
-                        root0 = self._filtered_markers["Root0"][frame]
+                        root0 = self._filtered_markers[centerPoint][frame]
                         x += [point.x - root0.x]
                         y += [point.y - root0.y]
                         z += [point.z - root0.z + root0z0]
@@ -538,7 +541,7 @@ class Markers(object):
                         y.append(joint[frame][1])
                         z.append(joint[frame][2])
                     else:
-                        root0 = self._filtered_markers["Root0"][frame]
+                        root0 = self._filtered_markers[centerPoint][frame]
                         x.append(joint[frame][0] - root0.x)
                         y.append(joint[frame][1] - root0.y)
                         z.append(joint[frame][2] - root0.z + root0z0)
