@@ -44,34 +44,16 @@
 # //==============================================================================
 import csv
 from typing import List, Any
-
-import pandas
+from ..Interpolation import Akmia
 import numpy as np
-from .Markers import ModelOutput as modeloutput
-from .Markers import Markers as markers
-from .Devices import EMG, IMU, Accel, ForcePlate
-import matplotlib.pyplot as plt
-from Vicon import Markers
+from Vicon.Markers import ModelOutput as modeloutput
+from Vicon.Devices import EMG, IMU, Accel, ForcePlate
+from . import MocapBase
+class Vicon(MocapBase.MocapBase):
 
-## @package Vicon
-# Reads motion capture data from a csv file.
-
-## @class Vicon
-# Object to read motion capture data
-#
-# Will read data from `file_path` on construction. May take a few seconds for large datasets!
-class Vicon(object):
-
-    ## Vicon constructor
-    # @param file_path The file to read from
-    # @param verbose Flag to enable status prints, defaults to False
-    # @param interpolate Flag to enable interpolating holes in data, defaults to True
-    # @param maxnanstotal Configures the maximum total missing data points that Vicon will attempt to interpolate
-    # @param maxnansrow Configures the maximum missing data points in a row that Vicon will attempt to interpolate
-    # @param sanitize Flag to replace any dataset consisting solely of NaNs with 0s, defaults to True
-    def __init__(self, file_path, verbose=False, interpolate=True, maxnanstotal=-1, maxnansrow=-1, sanitize=True):
+    def __init__(self, file_path, verbose=False, interpolate=True, maxnanstotal=-1, maxnansrow=-1, sanitize=True,inerpolation_method=Akmia.Akmia):
+        super(Vicon, self).__init__(file_path, verbose, interpolate, maxnanstotal, maxnansrow, sanitize,inerpolation_method)
         self._file_path = file_path
-        self.joint_names = ["Ankle", "Knee", "Hip"]
         self._number_of_frames = 0
         self._T_EMGs = {}
         self._EMGs = {}
@@ -79,23 +61,6 @@ class Vicon(object):
         self._IMUs = {}
         self._accels = {}
 
-        #  nan_dict is a dictionary with the same format of data_dict,
-        #  but it keeps track of the positions of nans that get interpolated.
-
-        #  data is accessed through nan_dict[category][subject][field],
-        #  where nan_dict contains category iff there is at least one valid subject for the category,
-        #  nan_dict[category] contains subject iff there is at least one valid field for the subject, and
-        #  nan_dict[category][subject] contains field iff data_dict[category][subject][field]["data"] exists.
-
-        #  nan_dict[category][subject][field] is a boolean array where
-        #  nan_dict[category][subject][field] = np.isnan(data_dict[category][subject][field]["data"])
-        #  or, nan_dict[category][subject][field][n] = np.isnan(data_dict[category][subject][field]["data"][n])
-        #  iff data_dict[category][subject][field]["data"] contained missing values that were interpolated.
-
-        #  if data_dict[category][subject][field]["data"] did not contain any missing values,
-        #  or if data_dict[category][subject][field]["data"] consisted solely of nans,
-        #  nan_dict[category][subject][field] is an array consisting only of False,
-        #  where len(nan_dict[category][subject][field]) = len(data_dict[category][subject][field]["data"])
 
         self._nan_dict = {}
 
@@ -103,69 +68,20 @@ class Vicon(object):
         #  If sanitized[category][subject] exists, that subject has had at least one field sanitized
         self._sanitized = {}
 
-        self.data_dict = self.open_vicon_file(self._file_path, verbose=verbose, interpolate=interpolate,
-                                              maxnanstotal=maxnanstotal, maxnansrow=maxnansrow, sanitize=sanitize)
-        self._make_Accelerometers(verbose=verbose)
-        self._make_EMGs(verbose=verbose)
-        self._make_force_plates(verbose=verbose)
-        self._make_IMUs(verbose=verbose)
+        self.parse()
+
+    def parse(self):
+
+        self.data_dict = self.open_file(self._file_path, verbose=self._verbose, interpolate=self.interpolate,
+                                              maxnanstotal=self._maxanstotal, maxnansrow=self._maxnansrow, sanitize=self.sanitize)
+        self._make_Accelerometers(verbose=self._verbose)
+        self._make_EMGs(verbose=self._verbose)
+        self._make_force_plates(verbose=self._verbose)
+        self._make_IMUs(verbose=self._verbose)
         self._make_marker_trajs()
-        self._make_model(verbose=verbose)
-
-    ## Finds the number and sets of frames
-    # @param col The column to search in
-    def _find_number_of_frames(self, col):
-        """
-        Finds the number and sets of frames
-        :param col: column to search in
-        :return: None
-        """
-        index = col.index("Frame") + 2
-        current_number = col[index]
-
-        while current_number.isdigit():
-            index += 1
-            current_number = col[index]
-
-        self.number_of_frames = col[index - 1]
+        self._make_model(verbose=self._verbose)
 
     @property
-    ## Returns the dataset's markers
-    def markers(self):
-        return self._markers
-
-    @property
-    ## Returns the dataset's length
-    def length(self):
-        return self._length
-
-    @length.setter
-    ## Sets the dataset's length
-    def length(self, value):
-        self._length = value
-
-    @property
-    ## Returns the number of frames
-    def number_of_frames(self):
-        """
-
-        :return: number of frames
-        :rtype: int
-        """
-        return self._number_of_frames
-
-    @number_of_frames.setter
-    ## Sets the number of frames
-    def number_of_frames(self, value):
-        """
-
-        :param value:
-        :return:
-        """
-        self._number_of_frames = value
-
-    @property
-    ## Returns the Accels dictionary
     def accels(self):
         """
         Get the Accels dict
@@ -175,7 +91,6 @@ class Vicon(object):
         return self._accels
 
     @property
-    ## Returns the Force Plate dictionary
     def force_plate(self):
         """
          Get the force plate dict
@@ -185,7 +100,6 @@ class Vicon(object):
         return self._force_plates
 
     @property
-    ## Returns the IMU dictionary
     def IMUs(self):
         """
          Get the IMU dict
@@ -195,7 +109,6 @@ class Vicon(object):
         return self._IMUs
 
     @property
-    ## Returns the T EMG dictionary
     def T_EMGs(self):
         """
          Get the EMG dict
@@ -205,7 +118,6 @@ class Vicon(object):
         return self._T_EMGs
 
     @property
-    ## Returns the EMG dictionary
     def EMGs(self):
         """
         Get the EMGs dict
@@ -214,7 +126,6 @@ class Vicon(object):
         """
         return self._EMGs
 
-    ## Returns the model output
     def get_model_output(self):
         """
         get the model output
@@ -223,7 +134,6 @@ class Vicon(object):
         """
         return self._model_output
 
-    ## Returns the segments
     def get_segments(self):
         """
         get the segments
@@ -232,7 +142,6 @@ class Vicon(object):
         """
         return self.data_dict["Segments"]
 
-    ## Returns the keys to the segments dictionary
     def get_segments_keys(self):
         """
         get the segments
@@ -241,7 +150,6 @@ class Vicon(object):
         """
         return self.data_dict.keys()
 
-    ## Returns the markers
     def get_markers(self):
         """
         get the markers
@@ -250,7 +158,6 @@ class Vicon(object):
         """
         return self.markers
 
-    ## Returns the joints
     def get_joints(self):
         """
         get the joints
@@ -259,7 +166,6 @@ class Vicon(object):
         """
         return self.data_dict["Joints"]
 
-    ## Returns the keys to the joints dictionary
     def get_joints_keys(self):
         """
         get the joints keys
@@ -268,8 +174,6 @@ class Vicon(object):
         """
         return self.data_dict.keys()
 
-    ## Returns an IMU of specified index
-    # @param index The index of the IMU
     def get_imu(self, index):
         """
         get the a imu
@@ -366,7 +270,7 @@ class Vicon(object):
         """
         return self._T_EMGs.keys()
 
-    def get_all_t_emg(self, index):
+    def get_all_t_emg(self):
         """
         Get the T EMG values
         :param index: number of sensor
@@ -375,42 +279,13 @@ class Vicon(object):
         """
         return self._T_EMGs
 
-    def _check_keys(self, key_list, key):
-        """
-
-        :param dict:
-        :param key:
-        :return:
-        """
-
-        return any(key in s for s in key_list)
-
-    def _filter_number(self, key):
-        """
-
-        :param key:
-        :return:
-        """
-        return int(''.join(filter(str.isdigit, key)))
-
-    def _filter_dict(self, sensors, substring):
-        """
-        filter the dictionary
-        :param sensors: Dictionary to parse
-        :param substring: substring of the keys to look for in the dict
-        :return: keys that contain the substring
-        :type: list
-        """
-        my_list = []
-        return list(filter(lambda x: substring in x, sensors.keys()))
-
     def _make_model(self, verbose=False):
         """
         generates a model from the model outputs
         :return:
         """
         if "Model Outputs" in self.data_dict:
-            self._model_output = modeloutput.ModelOutput(self.data_dict["Model Outputs"], self.joint_names)
+            self._model_output = modeloutput.ModelOutput(self.data_dict["Model Outputs"])
             if verbose:
                 print("Model Outputs generated")
         elif verbose:
@@ -444,8 +319,6 @@ class Vicon(object):
         elif verbose:
             print("A scan for force plates found no Devices")
 
-    def _make_markers(self):
-        markers = self.data_dict["Trajectories"]
 
     def _make_EMGs(self, verbose=True):
         """
@@ -487,14 +360,6 @@ class Vicon(object):
         elif verbose:
             print("A scan for IMUs found no Devices")
 
-    def _make_marker_trajs(self):
-        """
-        generate IMU models
-        :return: None
-        """
-        self._markers = markers.Markers(self.data_dict["Trajectories"], self._file_path[:len(self._file_path)-4])
-        self._markers.make_markers()
-
     def _make_Accelerometers(self, verbose=False):
         """
         generate the accel objects
@@ -513,7 +378,7 @@ class Vicon(object):
         elif verbose:
             print("A scan for Accels found no Devices")
 
-    def open_vicon_file(self, file_path, verbose=False, interpolate=True, maxnanstotal=-1, maxnansrow=-1,
+    def open_file(self, file_path, verbose=False, interpolate=True, maxnanstotal=-1, maxnansrow=-1,
                         sanitize=True):
         """
         parses the Vicon sensor data into a dictionary
@@ -721,143 +586,20 @@ class Vicon(object):
                     info["interpolate"] = True
 
         for key, value in data.items():  # For every subject in the data...
-            for sub_key, sub_value in value.items():  # For each field under each subject...
-                #  If we have NaNs and the whole row isn't NaNs...
-                #  No interpolation method can do anything with an array of NaNs,
-                #  so this way we save ourselves a bit of computation
-                nans = np.isnan(sub_value["data"])
-                if True in nans and False in nans and interpolate and naninfo[key][sub_key]["interpolate"]:
-                    if category not in self._nan_dict:
-                        self._nan_dict[category] = {}
-                    if key not in self._nan_dict[category]:
-                        self._nan_dict[category][key] = {}
-                    self._nan_dict[category][key][sub_key] = nans
-                    if verbose:
-                        print("Interpolating missing values in field " + sub_key + ", in subject " + key + \
-                              ", in category " + category + "...")
-                    s = pandas.Series(sub_value["data"])
-                    #  Akima interpolation only covers interior NaNs,
-                    #  and splines are *way* too imprecise with unset boundary conditions,
-                    #  so linear interpolation is used for unset values at the edges
-                    try:
-                        s = s.interpolate(method='akima', limit_direction='both')
-                    except ValueError:
-                        if verbose:
-                            print("Akima Interpolation failed for field " + sub_key + ", in subject " + key + \
-                                  ", in category " + category + "!")
-                            print("Falling back to linear interpolation...")
-                    s = s.interpolate(method='linear', limit_direction='both')
-                    sub_value["data"] = s.to_list()
-                else:
-                    if False not in nans:
-                        if verbose:
-                            print("Could not interpolate field " + sub_key + ", in subject " + key + \
-                                  ", in category " + category + ", as all values were nans!")
-                        if sanitize and sub_key != "":
-                            sub_value["data"] = [0 for i in range(len(sub_value["data"]))]
-                            if verbose:
-                                print("Sanitizing field with all 0s...")
-                            if category not in self._sanitized:
-                                self._sanitized[category] = []
-                            if key not in self._sanitized[category]:
-                                self._sanitized[category].append(key)
-                    if category not in self._nan_dict:
-                        self._nan_dict[category] = {}
-                    if key not in self._nan_dict[category]:
-                        self._nan_dict[category][key] = {}
-                    self._nan_dict[category][key][sub_key] = self._false_of_n(len(sub_value["data"]))
+
+            # prepare the data for the interpolate.
+            #ingnore if it is the marker data, use the custom function set by the user
+            if category == "Trajectories" and not ("Magnitude( X )" in value.keys()) and not ("Count" in value.keys()):
+
+                self._prepare_interpolation(value, key, naninfo, category, False, sanitize, verbose)
+            else:
+                self._prepare_interpolation(value, key, naninfo, category, interpolate, sanitize, verbose)
+
+        if category == "Trajectories":
+            my_interpolate = self._marker_interpolation(data)
+            my_interpolate.interpolate(verbose)
 
         return data
-
-    ## Function to graph a certain field of data
-    # @param category The category containing the data to be graphed
-    # @param subject The subject containing the data to be graphed
-    # @param field The field of the data to be graphed
-    # @param showinterpolated Flag to set whether interpolated data should be graphed, defaults to True
-    # @param colorinterpolated Flag to set whether interpolated data should be colored differently from normal data,
-    # defaults to True
-    # @param limits Configures the horizontal endpoints of the graph. A Tuple of the form `(start, end)`.
-    def graph(self, category, subject, field, showinterpolated=True, colorinterpolated=True, limits=None):
-        """Graphs the data specified. If showinterpolated is set to False, interpolated values will not be shown."""
-        if not (category in self.data_dict and subject in self.data_dict[category] and field in
-                self.data_dict[category][subject]):
-            return  # We don't have any data for this field!
-        interpolated = True in self._nan_dict[category][subject][field]
-        if not interpolated or (not colorinterpolated and showinterpolated):  # Simplest case - just graph the data
-            plt.plot(self.data_dict[category][subject][field]["data"])
-            plt.xlabel("Frame")
-            plt.ylabel(self.data_dict[category][subject][field]["unit"])
-            plt.title("Data in category " + category + ", in subject " + subject + ", in field " + field)
-            if limits is not None:
-                plt.xlim(limits)
-            plt.show()
-        else:
-            nans = self._nan_dict[category][subject][field]
-            data = self.data_dict[category][subject][field]["data"]
-
-            orgdatablocks = []
-            interdatablocks = []
-            orgtemp = []
-            intertemp = []
-            for i in range(len(nans)):
-                if nans[i]:
-                    if len(orgtemp) > 0:
-                        orgdatablocks.append(orgtemp)
-                        orgtemp = []
-                    intertemp.append(i)
-                else:
-                    if len(intertemp) > 0:
-                        interdatablocks.append(intertemp)
-                        intertemp = []
-                    orgtemp.append(i)
-            if len(orgtemp) > 0:
-                orgdatablocks.append(orgtemp)
-            if len(intertemp) > 0:
-                interdatablocks.append(intertemp)
-
-            flagorg = True
-            for blk in orgdatablocks:
-                if flagorg:
-                    plt.plot(blk, data[blk[0]:blk[len(blk) - 1] + 1], "C0", label="Original Data")
-                    flagorg = False
-                else:
-                    plt.plot(blk, data[blk[0]:blk[len(blk) - 1] + 1], "C0")
-
-            if showinterpolated:
-                flagint = True
-                for blk in interdatablocks:
-                    if flagint:
-                        plt.plot([blk[0]-1] + blk + [blk[len(blk) - 1] + 1], data[blk[0]-1:blk[len(blk) - 1] + 2], "C1", label="Interpolated Data")
-                        flagint = False
-                    else:
-                        plt.plot([blk[0]-1] + blk + [blk[len(blk) - 1] + 1], data[blk[0]-1:blk[len(blk) - 1] + 2], "C1")
-                plt.legend()
-
-            plt.xlabel("Frame")
-            plt.ylabel(self.data_dict[category][subject][field]["unit"])
-            plt.title("Data in category " + category + ", in subject " + subject + ", in field " + field)
-            if limits is not None:
-                plt.xlim(limits)
-            plt.show()
-
-    def is_sanitized(self, category, subject):
-        if category not in self._sanitized:
-            return False
-        for x in self._sanitized[category]:
-            if subject in x:
-                return True
-        return False
-
-    def _false_of_n(self, n):
-        """Helper function to generate an array of Falses of length N"""
-        arr = []
-        for i in range(n):
-            arr.append(False)
-        return arr
-
-    def _len_data(self, category):
-        """Returns the length of the data section of a given category"""
-        return len(next(next(self.data_dict[category].itervalues()).itervalues())["data"])
 
     def save(self, filename=None, verbose=False, mark_interpolated=True):
         file_path = self._file_path
