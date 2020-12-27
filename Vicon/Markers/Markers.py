@@ -548,7 +548,7 @@ class Markers(object):
                         z.append(joint[frame][2] - root0.z + root0z0)
                 joints_points.append([x, y, z])
 
-            if addlPoints is not None and frame >= addlPointsMin:
+            if addlPoints is not None:
                 x = []
                 y = []
                 z = []
@@ -572,7 +572,7 @@ class Markers(object):
 
         ani = animation.FuncAnimation(self._fig,
                                       self.__animate, nfr,
-                                      fargs=(x_total, y_total, z_total, joints_points, addl_total),
+                                      fargs=(x_total, y_total, z_total, joints_points, addl_total, addlPointsMin),
                                       interval=100 / fps)
         if save:
             Writer = animation.writers['ffmpeg']
@@ -582,7 +582,7 @@ class Markers(object):
         else:
             plt.show()
 
-    def __animate(self, frame, x, y, z, centers=None, addl=None):
+    def __animate(self, frame, x, y, z, centers=None, addl=None, addl_min=0):
         """
 
         :param frame: interation frame
@@ -602,7 +602,7 @@ class Markers(object):
         self._ax.scatter(x[frame], y[frame], z[frame], c='r', marker='o')
         if len(centers) > 0:
             self._ax.scatter(centers[frame][0], centers[frame][1], centers[frame][2], c='g', marker='o')
-        if len(addl) > 0:
+        if len(addl) > 0 and frame >= addl_min:
             self._ax.scatter(addl[frame][0], addl[frame][1], addl[frame][2], c='b', marker='o')
 
     def save_joints(self, verbose=False, jlim=None, doBall=True, doHinge=True):
