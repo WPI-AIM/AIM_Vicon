@@ -486,7 +486,7 @@ class Markers(object):
                        [np.mean([joint_by_parent[n].x[1] for n in range(frames)])],
                        [np.mean([joint_by_parent[n].x[2] for n in range(frames)])]], joint_by_child
 
-    def play(self, joints=False, save=False, name="im", center=False, centerPoint=None):
+    def play(self, joints=False, save=False, name="im", center=False, centerPoint=None, addlPoints=None, addlPointsMin=0):
         """
         play an animation of the markers
         :param joints: bool to display calculated joint centers
@@ -502,6 +502,7 @@ class Markers(object):
         y_total = []
         z_total = []
         joints_points = []
+        addl_total = []
         fps = 10  # Frame per sec
         keys = self._filtered_markers.keys()
         nfr = len(self._filtered_markers[list(keys)[0]])  # Number of frames
@@ -547,13 +548,31 @@ class Markers(object):
                         z.append(joint[frame][2] - root0.z + root0z0)
                 joints_points.append([x, y, z])
 
+            if addlPoints is not None and frame >= addlPointsMin:
+                x = []
+                y = []
+                z = []
+                for point in addlPoints[frame]:
+                    if not center:
+                        x.append(point[0])
+                        y.append(point[1])
+                        z.append(point[2])
+                    else:
+                        root0 = self._filtered_markers[centerPoint][frame]
+                        x.append(point[0] - root0.x)
+                        y.append(point[1] - root0.y)
+                        z.append(point[2] - root0.z + root0z0)
+                addl_total.append([x, y, z])
+
+
+
         self._fig = plt.figure()
         self._ax = self._fig.add_subplot(111, projection='3d')
         self._ax.set_autoscale_on(False)
 
         ani = animation.FuncAnimation(self._fig,
                                       self.__animate, nfr,
-                                      fargs=(x_total, y_total, z_total, joints_points),
+                                      fargs=(x_total, y_total, z_total, joints_points, addl_total),
                                       interval=100 / fps)
         if save:
             Writer = animation.writers['ffmpeg']
@@ -563,7 +582,7 @@ class Markers(object):
         else:
             plt.show()
 
-    def __animate(self, frame, x, y, z, centers=None):
+    def __animate(self, frame, x, y, z, centers=None, addl=None):
         """
 
         :param frame: interation frame
@@ -583,6 +602,8 @@ class Markers(object):
         self._ax.scatter(x[frame], y[frame], z[frame], c='r', marker='o')
         if len(centers) > 0:
             self._ax.scatter(centers[frame][0], centers[frame][1], centers[frame][2], c='g', marker='o')
+        if len(addl) > 0:
+            self._ax.scatter(addl[frame][0], addl[frame][1], addl[frame][2], c='b', marker='o')
 
     def save_joints(self, verbose=False, jlim=None, doBall=True, doHinge=True):
         file_path = self._dat_name + "-joints.csv"
