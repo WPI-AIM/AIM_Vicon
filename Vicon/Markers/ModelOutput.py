@@ -44,7 +44,9 @@
 # //==============================================================================
 
 from GaitCore import Core as core
-from GaitCore.Bio.Leg import Leg,Arm,Trunk
+from GaitCore.Bio.Leg import Leg
+from GaitCore.Bio.Arm import Arm
+from GaitCore.Bio.Trunk import Trunk
 from GaitCore.Bio.Joint import Joint
 
 class ModelOutput(object):
