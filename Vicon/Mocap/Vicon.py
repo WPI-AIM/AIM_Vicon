@@ -72,8 +72,8 @@ class Vicon(MocapBase.MocapBase):
 
     def parse(self):
 
-        self.data_dict = self.open_file(self._file_path, verbose=self._verbose, interpolate=self.interpolate,
-                                              maxnanstotal=self._maxanstotal, maxnansrow=self._maxnansrow, sanitize=self.sanitize)
+        self.data_dict = self.open_file(self._file_path, verbose=self._verbose, interpolate=self._interpolate,
+                                              maxnanstotal=self._maxanstotal, maxnansrow=self._maxnansrow, sanitize=self._sanitize)
         self._make_Accelerometers(verbose=self._verbose)
         self._make_EMGs(verbose=self._verbose)
         self._make_force_plates(verbose=self._verbose)
@@ -596,7 +596,7 @@ class Vicon(MocapBase.MocapBase):
                 self._prepare_interpolation(value, key, naninfo, category, interpolate, sanitize, verbose)
 
         if category == "Trajectories":
-            my_interpolate = self._marker_interpolation(data)
+            my_interpolate = self.my_marker_interpolation(data)
             my_interpolate.interpolate(verbose)
 
         return data

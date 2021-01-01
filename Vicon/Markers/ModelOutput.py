@@ -117,7 +117,7 @@ class ModelOutput(object):
         :return:
         """
         return self._left_arm
-    
+
     def get_right_trunk(self):
         """
 
