@@ -552,7 +552,8 @@ class Markers(object):
                 x = []
                 y = []
                 z = []
-                for point in addlPoints[frame]:
+                for j_points in addlPoints:
+                    point = j_points[frame]
                     if not center:
                         x.append(point[0])
                         y.append(point[1])
