@@ -486,23 +486,27 @@ class Markers(object):
                        [np.mean([joint_by_parent[n].x[1] for n in range(frames)])],
                        [np.mean([joint_by_parent[n].x[2] for n in range(frames)])]], joint_by_child
 
-    def play(self, joints=False, save=False, name="im", center=False):
+    def play(self, joints=False, save=False, name="im", center=False, centerPoint=None, addlPoints=None, addlPointsMin=0):
         """
-        play an animation of the         markers
-        :param joints: opital param for joint centers
+        play an animation of the markers
+        :param joints: bool to display calculated joint centers
         :param save: bool to save the animation
         :param center: bool to keep the markers centered
         :return: name of file
         """
 
+        if center and centerPoint is None:
+            raise ValueError("Must specify the marker to center on!")
+
         x_total = []
         y_total = []
         z_total = []
         joints_points = []
+        addl_total = []
         fps = 10  # Frame per sec
         keys = self._filtered_markers.keys()
         nfr = len(self._filtered_markers[list(keys)[0]])  # Number of frames
-        root0z0 = self._filtered_markers["Root0"][0].z
+        root0z0 = self._filtered_markers[centerPoint][0].z
 
         for frame in range(nfr):
             x = []
@@ -516,7 +520,7 @@ class Markers(object):
                         y += [point.y]
                         z += [point.z]
                     else:
-                        root0 = self._filtered_markers["Root0"][frame]
+                        root0 = self._filtered_markers[centerPoint][frame]
                         x += [point.x - root0.x]
                         y += [point.y - root0.y]
                         z += [point.z - root0.z + root0z0]
@@ -538,11 +542,29 @@ class Markers(object):
                         y.append(joint[frame][1])
                         z.append(joint[frame][2])
                     else:
-                        root0 = self._filtered_markers["Root0"][frame]
+                        root0 = self._filtered_markers[centerPoint][frame]
                         x.append(joint[frame][0] - root0.x)
                         y.append(joint[frame][1] - root0.y)
                         z.append(joint[frame][2] - root0.z + root0z0)
                 joints_points.append([x, y, z])
+
+            if addlPoints is not None:
+                x = []
+                y = []
+                z = []
+                for point in addlPoints[frame]:
+                    if not center:
+                        x.append(point[0])
+                        y.append(point[1])
+                        z.append(point[2])
+                    else:
+                        root0 = self._filtered_markers[centerPoint][frame]
+                        x.append(point[0] - root0.x)
+                        y.append(point[1] - root0.y)
+                        z.append(point[2] - root0.z + root0z0)
+                addl_total.append([x, y, z])
+
+
 
         self._fig = plt.figure()
         self._ax = self._fig.add_subplot(111, projection='3d')
@@ -550,7 +572,7 @@ class Markers(object):
 
         ani = animation.FuncAnimation(self._fig,
                                       self.__animate, nfr,
-                                      fargs=(x_total, y_total, z_total, joints_points),
+                                      fargs=(x_total, y_total, z_total, joints_points, addl_total, addlPointsMin),
                                       interval=100 / fps)
         if save:
             Writer = animation.writers['ffmpeg']
@@ -560,7 +582,7 @@ class Markers(object):
         else:
             plt.show()
 
-    def __animate(self, frame, x, y, z, centers=None):
+    def __animate(self, frame, x, y, z, centers=None, addl=None, addl_min=0):
         """
 
         :param frame: interation frame
@@ -580,6 +602,8 @@ class Markers(object):
         self._ax.scatter(x[frame], y[frame], z[frame], c='r', marker='o')
         if len(centers) > 0:
             self._ax.scatter(centers[frame][0], centers[frame][1], centers[frame][2], c='g', marker='o')
+        if len(addl) > 0 and frame >= addl_min:
+            self._ax.scatter(addl[frame][0], addl[frame][1], addl[frame][2], c='b', marker='o')
 
     def save_joints(self, verbose=False, jlim=None, doBall=True, doHinge=True):
         file_path = self._dat_name + "-joints.csv"
