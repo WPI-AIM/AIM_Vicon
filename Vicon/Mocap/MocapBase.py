@@ -199,7 +199,7 @@ class MocapBase(object):
         generate IMU models
         :return: None
         """
-        self._markers = markers.Markers(self.data_dict["Trajectories"])
+        self._markers = markers.Markers(self.data_dict["Trajectories"], self._file_path[:len(self._file_path)-4])
         self._markers.make_markers()
 
     @abc.abstractmethod
