@@ -349,7 +349,7 @@ class MocapBase(object):
                 if key not in self._nan_dict[category]:
                     self._nan_dict[category][key] = {}
                 self._nan_dict[category][key][sub_key] = nans
-                if verbose:
+                if verbose and interpolate:
                     print("Interpolating missing values in field " + sub_key + ", in subject " + key + \
                           ", in category " + category + "...")
                 if interpolate:
