@@ -10,14 +10,14 @@ A package to read in Vicon data for analysis. This package can be used to read i
 the Vicon motion capture system. It will automatically attempt to interpolate missing data, and can save data back to a csv.
 
 
-## Dependence
-* python 2.7
-* numpy
-* matplotlib
-* pandas
-* scipy
+## PyPI Dependencies
+* Python 3 (may work for Python 2, but deprecated and not supported)
+* [numpy](https://numpy.org/)
+* [matplotlib](https://matplotlib.org/)
+* [pandas](https://pandas.pydata.org/)
+* [scipy](https://www.scipy.org/)
 
-## External Dependence 
+## External Dependencies 
 This package requires:
 
 * [AIM_GaitCore](https://github.com/WPI-AIM/AIM_GaitCore.git)
@@ -87,17 +87,17 @@ If ``mark_interpolated`` is set to ``True``, any values that were generated thro
 Vicon is able to read this, and a future Vicon object reading this value will display a warning with ``verbose`` set to ``True``.
 
 
-###Markers
+### Markers
 A ``Markers`` object can be obtained through the ``Vicon.get_markers()`` method.
 It contains information about the markers' positions, and contains methods for calculating
 information about the rigid bodies and the joint centers.
 
-####Getting a Rigid Body
+#### Getting a Rigid Body
 The ``smart_sort`` function will automatically group markers into their rigid bodies.
 Once sorted, it is possible to retrieve the data of all markers associated with a given rigid body, using the ``get_rigid_bodies``
 function.
 
-####Transformation Matrices
+#### Transformation Matrices
 The ``auto_make_transform(frames)`` function will automatically make the transformation matrices for every
 rigid body for which a frame of reference is provided. 
 A frame of reference is an array of points, which represent the locations of the markers on the rigid body
@@ -109,7 +109,7 @@ The ``get_frame`` function will return the transformation matrices for a given r
 The transformation matrices are of the form local to global - that is to say, where ``T = markers.get_frame(RigidBody)[n]``,
 ``np.dot(T, [[0], [0], [0], [1]])`` will return a vector representing the location of the specified rigid body during frame n.
 
-####Frame Shifting
+#### Frame Shifting
 There are a few static methods which automatically perform frame-shifting operations, requiring only that the user specify points and frames.
 
 ``Markers.global_to_frame(frame, vector)`` transforms a vector in the global reference frame to the reference frame specified.
@@ -122,7 +122,7 @@ is the inverse of ``global_point_to_frame``.
 ``Markers.get_transform_btw_two_frames(parent_frame, child_frame)`` returns the transformation matrix from the parent
 frame of reference to the child frame of reference.
 
-####Defining and Calculating Joint Centers
+#### Defining and Calculating Joint Centers
 
 The ``def_joint`` function allows the user to define their own joints with the rigid bodies in the data.
 ``def_joint("r_hip", "hip", "r_femur", ballJoint=True)`` creates a ball joint named *r_hip* between the rigid bodies *hip* and *r_femur*.
@@ -137,7 +137,7 @@ The joint position relative to the parent and child rigid bodies can be accessed
 ``get_joint_rel_child`` methods, respectively. Each returns a 1D array of the ``[x, y, z]`` position of the joint center,
 relative to either the parent or child rigid body, in that rigid body's reference frame.
 
-####Playing the Markers
+#### Playing the Markers
 
 The ``play`` function will create a matplotlib animation of the markers. If the ``calculate_joints`` 
 function has been run, and the ``joints`` flag is set to ``True``, this animation will include the calculated joint locations
@@ -371,4 +371,34 @@ data = Vicon.Vicon(file)
 fp = data.get_force_plate(1).get_forces() # pass in 1 or 2 to get the foce plates
 ```
 
+## Development Environment
 
+Here is a suggested way to develop Python modules, specifically the AIM-Vicon module. For this section, I will be using the project's GitHub URL, but this should be replaced with your personal URL if you are forking and creating a pull request.
+
+1. Clone the repository you will be working on.
+``` bash
+git clone git@github.com:WPI-AIM/AIM_Vicon.git
+```
+**Note**: It is recommended to use a virtual environment. You can use `venv`, `pipenv`, `conda`, or anything else. This will keep the development environment separate from your main Python environment. Any new development won't affect the stable version of the module. For the sake of this tutorial, `conda` will be used, but you should be able to switch out the commands as you wish. If you are developing multiple VICON modules, you only need one environment. If you do not want to use a virtual environment, please skip to **Step 3**
+
+2. Set up your virtual environment. If you are using Conda, you can use this command:
+``` bash
+conda create --name [environment_name] python=3.8
+```
+Alternatively, you can use the environment file in the repository:
+``` bash
+conda env create -f environment.yml
+```
+Make sure you enable the environment in every terminal you run code in by using the following command:
+``` bash
+conda activate aim-vicon-dev # Replace [aim-vicon-dev] with the name of your environment
+```
+
+3. Perform a Pip development install. This will create a `.egg-info` directory both in your pip install location and the root of your python module. Essentially this is a symbolic link pointing between your development environment and the Python module install directory, so that any changes you make to the module are immediately reflected in the installed module. Run this command to 'development install' the module
+
+``` bash
+pip install -e [location_of_module_setup.py]
+pip install -e /home/user/development/AIM_Vicon/. # An example
+```
+
+4. Time to write some code!
