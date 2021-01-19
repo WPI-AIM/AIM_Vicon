@@ -44,6 +44,9 @@
 # //==============================================================================
 
 from GaitCore import Core as core
+from GaitCore.Bio.Sara import Sara
+from GaitCore.Bio.Score import Score
+
 from GaitCore.Bio.Leg import Leg
 from GaitCore.Bio.Arm import Arm
 from GaitCore.Bio.Trunk import Trunk
@@ -51,85 +54,106 @@ from GaitCore.Bio.Joint import Joint
 
 class ModelOutput(object):
 
-    def __init__(self, data):
+    def __init__(self, model_data):
 
-        self.joint_names = ["Hip", "Knee", "Ankle", "Head", "Thorax", "Neck", "Shoulder", "Pelvis", "Spine", "Wrist", "Elbow"]
-        left_joints = {}
-        right_joints = {}
+        # Create class-wide variables
+        self._model_data = model_data # Model data should already be split up in Vicon.py
+        self._joints = []
 
-        for side, joint in zip(("L", "R"), (left_joints, right_joints)):
-            for output in self.joint_names:
-                angle = None
-                power = None
-                moment = None
-                force = None
-                if side + output + "Angles" in data.keys():
-                    angle = core.PointArray.PointArray(data[side + output + "Angles"]["X"]["data"],
-                                       data[side + output + "Angles"]["Y"]["data"],
-                                       data[side + output + "Angles"]["Z"]["data"])
-                if side + output + "Force" in data.keys():
-                    force = core.PointArray.PointArray(data[side + output + "Force"]["X"]["data"],
-                                       data[side + output + "Force"]["Y"]["data"],
-                                       data[side + output + "Force"]["Z"]["data"])
-                if side + output + "Moment" in data.keys():
-                    moment = core.PointArray.PointArray(data[side + output + "Moment"]["X"]["data"],
-                                        data[side + output + "Moment"]["Y"]["data"],
-                                        data[side + output + "Moment"]["Z"]["data"])
-                if side + output + "Power" in data.keys():
-                    power = core.PointArray.PointArray(data[side + output + "Power"]["X"]["data"],
-                                       data[side + output + "Power"]["Y"]["data"],
-                                       data[side + output + "Power"]["Z"]["data"])
+        # Special model data (not joints)
+        self._score = {} # SCoRE => Symmetrical Center of Rotation Estimation
+        self._sara = {}  # SARA  => Symmetrical Axis of Rotation Analysis
+        
+        # Run setup functions
+        self.get_sara()
+        self.get_score()
+        print()
 
-                joint[output] = Joint(angle, moment, power, force)
+        # for side, joint in zip(("L", "R"), (left_joints, right_joints)):
+        #     for output in self.joint_names:
+        #         angle = None
+        #         power = None
+        #         moment = None
+        #         force = None
+        #         if side + output + "Angles" in data.keys():
+        #             angle = core.PointArray.PointArray(data[side + output + "Angles"]["X"]["data"],
+        #                                data[side + output + "Angles"]["Y"]["data"],
+        #                                data[side + output + "Angles"]["Z"]["data"])
+        #         if side + output + "Force" in data.keys():
+        #             force = core.PointArray.PointArray(data[side + output + "Force"]["X"]["data"],
+        #                                data[side + output + "Force"]["Y"]["data"],
+        #                                data[side + output + "Force"]["Z"]["data"])
+        #         if side + output + "Moment" in data.keys():
+        #             moment = core.PointArray.PointArray(data[side + output + "Moment"]["X"]["data"],
+        #                                 data[side + output + "Moment"]["Y"]["data"],
+        #                                 data[side + output + "Moment"]["Z"]["data"])
+        #         if side + output + "Power" in data.keys():
+        #             power = core.PointArray.PointArray(data[side + output + "Power"]["X"]["data"],
+        #                                data[side + output + "Power"]["Y"]["data"],
+        #                                data[side + output + "Power"]["Z"]["data"])
+
+                # joint[output] = Joint(angle, moment, power, force)
                 #joint[output] = core.Newton.Newton(angle, force, moment, power)
 
-        self._left_leg = Leg(left_joints["Hip"], left_joints["Knee"], left_joints["Ankle"])
-        self._right_leg = Leg(right_joints["Hip"], right_joints["Knee"], right_joints["Ankle"])
+        # self._left_leg = Leg(left_joints["Hip"], left_joints["Knee"], left_joints["Ankle"])
+        # self._right_leg = Leg(right_joints["Hip"], right_joints["Knee"], right_joints["Ankle"])
 
-        self._left_arm = Arm(left_joints["Shoulder"], left_joints["Elbow"], left_joints["Wrist"])
-        self._right_arm = Arm(right_joints["Shoulder"], right_joints["Elbow"], right_joints["Wrist"])
+        # self._left_arm = Arm(left_joints["Shoulder"], left_joints["Elbow"], left_joints["Wrist"])
+        # self._right_arm = Arm(right_joints["Shoulder"], right_joints["Elbow"], right_joints["Wrist"])
 
-        self._left_trunk = Trunk(left_joints["Head"], left_joints["Spine"], left_joints["Thorax"], left_joints["Pelvis"])
-        self._right_trunk = Trunk(right_joints["Head"], right_joints["Spine"], right_joints["Thorax"], right_joints["Pelvis"] )
+        # self._left_trunk = Trunk(left_joints["Head"], left_joints["Spine"], left_joints["Thorax"], left_joints["Pelvis"])
+        # self._right_trunk = Trunk(right_joints["Head"], right_joints["Spine"], right_joints["Thorax"], right_joints["Pelvis"] )        
+    
+    def get_sara(self):
+        
+        for key, value in self._model_data.items():
+            if 'sara' in key:
+                self._sara[key.replace('_sara', '')] = Sara(sara_data=value)
 
-    def get_right_leg(self):
-        """
+    def get_score(self):
 
-        :return:
-        """
-        return self._right_leg
+        for key, value in self._model_data.items():
+            if 'score' in key:
+                self._score[key.replace('_score', '')] = Score(score_data=value)
 
-    def get_left_leg(self):
-        """
+    # def get_right_leg(self):
+    #     """
 
-        :return:
-        """
-        return self._left_leg
+    #     :return:
+    #     """
+    #     return self._right_leg
 
-    def get_right_arm(self):
-        """
+    # def get_left_leg(self):
+    #     """
 
-        :return:
-        """
-        return self._right_arm
+    #     :return:
+    #     """
+    #     return self._left_leg
 
-    def get_left_arm(self):
-        """
+    # def get_right_arm(self):
+    #     """
 
-        :return:
-        """
-        return self._left_arm
+    #     :return:
+    #     """
+    #     return self._right_arm
 
-    def get_right_trunk(self):
-        """
+    # def get_left_arm(self):
+    #     """
 
-        :return:
-        """
-        return self._right_trunk
+    #     :return:
+    #     """
+    #     return self._left_arm
 
-    def get_left_trunk(self):
-        """
+    # def get_right_trunk(self):
+    #     """
 
-        :return:
-        """
-        return self._left_trunk
+    #     :return:
+    #     """
+    #     return self._right_trunk
+
+    # def get_left_trunk(self):
+    #     """
+
+    #     :return:
+    #     """
+    #     return self._left_trunk

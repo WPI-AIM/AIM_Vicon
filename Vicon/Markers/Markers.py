@@ -49,7 +49,7 @@ from GaitCore import Core as core
 import numpy as np
 from scipy.optimize import minimize
 import math
-from numpy import *
+# from numpy import *
 from math import sqrt
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
@@ -111,7 +111,7 @@ class Markers(object):
     def rigid_body(self):
         return self._rigid_body
 
-    @filtered_markers.setter
+    @rigid_body.setter
     def rigid_body(self, value):
         """
 
@@ -965,7 +965,7 @@ def cloud_to_cloud(A_, B_):
 
     assert len(A) == len(B)
 
-    N = A.shape[0];  # total points
+    N = A.shape[0]  # total points
 
     centroid_A = np.mean(A, axis=0)
     centroid_B = np.mean(B, axis=0)
@@ -1213,11 +1213,12 @@ def fit_to_plane(points):
 
 
 if __name__ == '__main__':
-    DataSets1 = [core.Point(531.6667, - 508.9951, 314.4273),
-                 core.Point(510.5082, - 457.7791, 357.1969),
-                 core.Point(463.9945, - 476.0904, 356.1137),
-                 core.Point(552.4579, - 566.4891, 393.5611),
-                 core.Point(505.9442, - 584.8004, 392.4779)]
+    # np.core.Point doesn't exist
+    # DataSets1 = [np.core.Point(531.6667, - 508.9951, 314.4273),
+    #              np.core.Point(510.5082, - 457.7791, 357.1969),
+    #              np.core.Point(463.9945, - 476.0904, 356.1137),
+    #              np.core.Point(552.4579, - 566.4891, 393.5611),
+    #              np.core.Point(505.9442, - 584.8004, 392.4779)]
 
     DataSets2 = [[-55.4398, 406.9759, - 487.4170],
                  [-117.4716, 384.3339, -510.7755],
@@ -1225,11 +1226,11 @@ if __name__ == '__main__':
                  [-84.8805, 394.2636, - 393.6067],
                  [-67.3354, 347.3059, - 393.7805]]
 
-    marker = [core.Point(0.0, 50.0, 0.0),
-              core.Point(-70.0, 50.0, 0.0),
-              core.Point(-70, 0, 0),
-              core.Point(0.0, 50.0, 100.0),
-              core.Point(0.0, 0.0, 100.0)]
+    # marker = [np.core.Point(0.0, 50.0, 0.0),
+    #           np.core.Point(-70.0, 50.0, 0.0),
+    #           np.core.Point(-70, 0, 0),
+    #           np.core.Point(0.0, 50.0, 100.0),
+    #           np.core.Point(0.0, 0.0, 100.0)]
 
     # print cloudtocloud(marker, DataSets1)
 

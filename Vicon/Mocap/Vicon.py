@@ -44,11 +44,13 @@
 # //==============================================================================
 import csv
 from typing import List, Any
-from ..Interpolation import Akmia
 import numpy as np
+from Vicon.Interpolation import Akmia
 from Vicon.Markers import ModelOutput as modeloutput
 from Vicon.Devices import EMG, IMU, Accel, ForcePlate
-from . import MocapBase
+from Vicon.Mocap import MocapBase
+
+
 class Vicon(MocapBase.MocapBase):
 
     def __init__(self, file_path, verbose=False, interpolate=True, maxnanstotal=-1, maxnansrow=-1, sanitize=True,inerpolation_method=Akmia.Akmia):
@@ -232,7 +234,7 @@ class Vicon(MocapBase.MocapBase):
         """
         return self.force_plate
 
-    def get_emg(self, index):
+    def get_emg_values(self, index):
         """
        Get the EMG values
        :param index: number of sensor
@@ -241,7 +243,7 @@ class Vicon(MocapBase.MocapBase):
         """
         return self._EMGs[index]
 
-    def get_emg(self):
+    def get_emg_keys(self):
         """
        Get the EMG keys
        :return: list of keys
@@ -491,6 +493,7 @@ class Vicon(MocapBase.MocapBase):
         column_names = self._fix_col_names(raw_data[start + 2])
 
         # column_names = raw_data[start + 2]
+        # TODO: Don't think strings are itterable in Python
         remove_numbers = lambda str: ''.join([i for i in str if not i.isdigit()])
 
         axis = list(map(remove_numbers, raw_data[start + 3]))

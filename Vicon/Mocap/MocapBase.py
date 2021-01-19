@@ -48,14 +48,14 @@ from typing import List, Any
 
 import pandas
 import numpy as np
-from ..Markers import ModelOutput as modeloutput
-from ..Markers import Markers as markers
-from ..Devices import EMG, IMU, Accel, ForcePlate
+from Vicon.Markers import ModelOutput as modeloutput
+from Vicon.Markers import Markers as markers
+from Vicon.Devices import EMG, IMU, Accel, ForcePlate
 import matplotlib.pyplot as plt
 from Vicon import Markers
-from ..Interpolation import Interpolation
+from Vicon.Interpolation import Interpolation
 import abc
-from ..Interpolation import Akmia
+from Vicon.Interpolation import Akmia
 class MocapBase(object):
 
     def __init__(self, file_path, verbose=False, interpolate=True, maxnanstotal=-1, maxnansrow=-1, sanitize=True, inerpolation_method=Akmia.Akmia):
@@ -71,6 +71,7 @@ class MocapBase(object):
         #  sanitized is a dictionary to keep track of what subject, if any, have had their fields sanitized
         #  If sanitized[category][subject] exists, that subject has had at least one field sanitized
         self._sanitized = {}
+        self.data_dict = {}
         # self.data_dict = self.open_file(self._file_path, verbose=verbose, interpolate=interpolate,
         #                                       maxnanstotal=maxnanstotal, maxnansrow=maxnansrow, sanitize=sanitize)
 
@@ -193,6 +194,7 @@ class MocapBase(object):
 
     def _make_markers(self):
         markers = self.data_dict["Trajectories"]
+        # FIXME: This method seems kind of pointless
 
     def _make_marker_trajs(self):
         """
