@@ -147,7 +147,7 @@ class MocapBase(object):
         """
         return self.markers
 
-    def get_joints(self):
+    def get_joints_dict(self):
         """
         get the joints
         :return: model joints
@@ -161,7 +161,7 @@ class MocapBase(object):
         :return: model joints keys
         :type: list of keys
         """
-        return self.data_dict.keys()
+        return self.data_dict["Joints"].keys() 
 
     def _check_keys(self, key_list, key):
         """

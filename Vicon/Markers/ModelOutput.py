@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+
 # //==============================================================================
 # /*
 #     Software License Agreement (BSD License)
@@ -43,32 +44,59 @@
 # */
 # //==============================================================================
 
+import copy
+
 from GaitCore import Core as core
 from GaitCore.Bio.Sara import Sara
 from GaitCore.Bio.Score import Score
+from GaitCore.Bio.Joint import Joint
 
 from GaitCore.Bio.Leg import Leg
 from GaitCore.Bio.Arm import Arm
 from GaitCore.Bio.Trunk import Trunk
 from GaitCore.Bio.Joint import Joint
 
-class ModelOutput(object):
+class ModelOutput():
 
-    def __init__(self, model_data):
+    def __init__(self, model_data: dict = {}, verbose=False, joints: list = None):
 
         # Create class-wide variables
-        self._model_data = model_data # Model data should already be split up in Vicon.py
-        self._joints = []
+        self._raw_model_data = model_data # Model data should already be split up in Vicon.py
+        self._joints = joints
 
-        # Special model data (not joints)
-        self._score = {} # SCoRE => Symmetrical Center of Rotation Estimation
-        self._sara = {}  # SARA  => Symmetrical Axis of Rotation Analysis
+        self._set_sara()
+        self._set_score()
+
+    def _set_sara(self):
+        """
+        Sets SARA for all joints with available data
+        SARA  => Symmetrical Axis of Rotation Analysis
+        """
+
+        for key, value in self._raw_model_data.items():
+            if 'sara' in key:
+                for joint in self._joints:
+                    if key.replace('_sara', '') == joint.name:
+                        joint.sara = Sara(sara_data = value)
+                        break
+
+    def _set_score(self):
+        """
+        Sets SCoRE for all joints with available data
+        SCoRE => Symmetrical Center of Rotation Estimation
+        """
+
+        for key, value in self._raw_model_data.items():
+            if 'score' in key:
+                for joint in self._joints:
+                    if key.replace('_score', '') == joint.name:
+                        joint.score = Score(score_data = value)
+                        break
+    
+    
+
+    # def create_body(self):
         
-        # Run setup functions
-        self.get_sara()
-        self.get_score()
-        print()
-
         # for side, joint in zip(("L", "R"), (left_joints, right_joints)):
         #     for output in self.joint_names:
         #         angle = None
@@ -92,8 +120,8 @@ class ModelOutput(object):
         #                                data[side + output + "Power"]["Y"]["data"],
         #                                data[side + output + "Power"]["Z"]["data"])
 
-                # joint[output] = Joint(angle, moment, power, force)
-                #joint[output] = core.Newton.Newton(angle, force, moment, power)
+        #         joint[output] = Joint(angle, moment, power, force)
+        #         joint[output] = core.Newton.Newton(angle, force, moment, power)
 
         # self._left_leg = Leg(left_joints["Hip"], left_joints["Knee"], left_joints["Ankle"])
         # self._right_leg = Leg(right_joints["Hip"], right_joints["Knee"], right_joints["Ankle"])
@@ -102,19 +130,7 @@ class ModelOutput(object):
         # self._right_arm = Arm(right_joints["Shoulder"], right_joints["Elbow"], right_joints["Wrist"])
 
         # self._left_trunk = Trunk(left_joints["Head"], left_joints["Spine"], left_joints["Thorax"], left_joints["Pelvis"])
-        # self._right_trunk = Trunk(right_joints["Head"], right_joints["Spine"], right_joints["Thorax"], right_joints["Pelvis"] )        
-    
-    def get_sara(self):
-        
-        for key, value in self._model_data.items():
-            if 'sara' in key:
-                self._sara[key.replace('_sara', '')] = Sara(sara_data=value)
-
-    def get_score(self):
-
-        for key, value in self._model_data.items():
-            if 'score' in key:
-                self._score[key.replace('_score', '')] = Score(score_data=value)
+        # self._right_trunk = Trunk(right_joints["Head"], right_joints["Spine"], right_joints["Thorax"], right_joints["Pelvis"] )  
 
     # def get_right_leg(self):
     #     """

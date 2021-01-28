@@ -45,6 +45,7 @@
 import csv
 from typing import List, Any
 import numpy as np
+from GaitCore.Bio.Joint import Joint
 from Vicon.Interpolation import Akmia
 from Vicon.Markers import ModelOutput as modeloutput
 from Vicon.Devices import EMG, IMU, Accel, ForcePlate
@@ -63,6 +64,7 @@ class Vicon(MocapBase.MocapBase):
         self._IMUs = {}
         self._accels = {}
 
+        self._joint_objs = []
 
         self._nan_dict = {}
 
@@ -76,12 +78,16 @@ class Vicon(MocapBase.MocapBase):
 
         self.data_dict = self.open_file(self._file_path, verbose=self._verbose, interpolate=self._interpolate,
                                               maxnanstotal=self._maxanstotal, maxnansrow=self._maxnansrow, sanitize=self._sanitize)
+        # Make Joint objects and add them to the list
+        self._make_joint_objs()
+
         self._make_Accelerometers(verbose=self._verbose)
         self._make_EMGs(verbose=self._verbose)
         self._make_force_plates(verbose=self._verbose)
         self._make_IMUs(verbose=self._verbose)
         self._make_marker_trajs()
         self._make_model(verbose=self._verbose)
+
 
     @property
     def accels(self):
@@ -281,13 +287,27 @@ class Vicon(MocapBase.MocapBase):
         """
         return self._T_EMGs
 
+    def _make_joint_objs(self, data_dict: dict = None):
+        """[summary]
+        """
+        self._joint_objs.clear()
+        if data_dict is None:
+            data_dict = self.data_dict
+
+        for key, value in data_dict["Joints"].items():
+            joint = Joint(name = key, angle_data = value)
+
+            self._joint_objs.append(joint)
+
+        return
+
     def _make_model(self, verbose=False):
         """
         generates a model from the model outputs
         :return:
         """
         if "Model Outputs" in self.data_dict:
-            self._model_output = modeloutput.ModelOutput(self.data_dict["Model Outputs"])
+            self._model_output = modeloutput.ModelOutput(self.data_dict["Model Outputs"], joints = self._joint_objs)
             if verbose:
                 print("Model Outputs generated")
         elif verbose:
