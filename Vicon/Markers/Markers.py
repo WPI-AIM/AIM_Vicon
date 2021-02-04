@@ -369,7 +369,7 @@ class Markers(object):
         :return: transformation of the rigid body
         """
 
-        return self._rigid_body[name]
+        return self._rigid_body.get(name)
 
     def get_rigid_body_keys(self):
         """

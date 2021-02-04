@@ -58,7 +58,7 @@ from GaitCore.Bio.Joint import Joint
 
 class ModelOutput():
 
-    def __init__(self, model_data: dict = {}, verbose=False, joints: list = None):
+    def __init__(self, model_data: dict = {}, verbose=False, joints: dict = None):
 
         # Create class-wide variables
         self._raw_model_data = model_data # Model data should already be split up in Vicon.py
@@ -75,11 +75,8 @@ class ModelOutput():
 
         for key, value in self._raw_model_data.items():
             if 'sara' in key:
-                for joint in self._joints:
-                    if key.replace('_sara', '') == joint.name:
-                        joint.sara = Sara(sara_data = value)
-                        break
-
+                self._joints.get(key.replace('_sara', '')).sara = Sara(sara_data = value)
+            
     def _set_score(self):
         """
         Sets SCoRE for all joints with available data
@@ -88,10 +85,7 @@ class ModelOutput():
 
         for key, value in self._raw_model_data.items():
             if 'score' in key:
-                for joint in self._joints:
-                    if key.replace('_score', '') == joint.name:
-                        joint.score = Score(score_data = value)
-                        break
+                 self._joints.get(key.replace('_score', '')).score = Score(score_data = value)
     
     
 

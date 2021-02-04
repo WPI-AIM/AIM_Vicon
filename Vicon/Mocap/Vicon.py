@@ -64,7 +64,7 @@ class Vicon(MocapBase.MocapBase):
         self._IMUs = {}
         self._accels = {}
 
-        self._joint_objs = []
+        self._joint_objs = {}
 
         self._nan_dict = {}
 
@@ -295,9 +295,7 @@ class Vicon(MocapBase.MocapBase):
             data_dict = self.data_dict
 
         for key, value in data_dict["Joints"].items():
-            joint = Joint(name = key, angle_data = value)
-
-            self._joint_objs.append(joint)
+            self._joint_objs[key] = Joint(name = key, angle_data = value)
 
         return
 
