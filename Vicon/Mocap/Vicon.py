@@ -447,7 +447,7 @@ class Vicon(MocapBase.MocapBase):
         for name in fitlered_col:
             inx.append(raw_col.index(name))
 
-        inx.append(len(raw_col))
+        inx.append(len(raw_col) + 1)
         return fitlered_col, inx
 
     def _fix_col_names(self, names):
