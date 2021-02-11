@@ -151,7 +151,17 @@ class AnimateModel():
                                     c = 'r', marker = 'o')
         
         # --- Animate Joints --- #
-
+        for key, joint in self.joint_dict.items():
+            joint_x_list = [joint.get('parent_pos').x[i],
+                            joint.get('joint_center_pos').x[i],
+                            joint.get('child_pos').x[i]]
+            joint_y_list = [joint.get('parent_pos').y[i],
+                            joint.get('joint_center_pos').y[i],
+                            joint.get('child_pos').y[i]]
+            joint_z_list = [joint.get('parent_pos').z[i],
+                            joint.get('joint_center_pos').z[i],
+                            joint.get('child_pos').z[i]]
+            self.ax.plot(joint_x_list, joint_y_list, joint_z_list, label=key, c='b', marker='*')
 
         # --- Animate Score/Sara --- #
         for key, sara in self.sara_dict.items():
