@@ -20,7 +20,7 @@ class AnimateModel():
         self._length = 0
         
         self.markers = {}
-
+        self.joint_dict = {}
         self.sara_dict = {}
         self.score_dict = {}
 
@@ -83,11 +83,22 @@ class AnimateModel():
         else:
             raise Exception("Error in AnimateModel: Marker sizes are not all the same")
 
-    def import_joints(self):
-        print()
+    def import_joint(self,  joint_name: str, 
+                            parent_joint_segment: PointArray, 
+                            child_joint_segment: PointArray, 
+                            joint_center: PointArray):
+        self.joint_dict[joint_name] = {
+            'parent_pos': parent_joint_segment,
+            'child_pos': child_joint_segment,
+            'joint_center_pos': joint_center
+        }
+
+    def clear_joints(self):
+        self.joint_dict = {}
 
     def import_sara(self, sara_data: dict):
         self.sara_dict = sara_data
+    
     def import_score(self, score_data: dict):
         self.score_dict = score_data
 
