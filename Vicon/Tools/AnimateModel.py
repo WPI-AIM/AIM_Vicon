@@ -39,7 +39,7 @@ class AnimateModel():
         self.ax.set_xlabel(x_label + " (in " + self.units + ")")
         self.ax.set_ylabel(y_label + " (in " + self.units + ")")
         self.ax.set_zlabel(z_label + " (in " + self.units + ")")
-        self.ax.set_title = chart_title
+        # self.ax.set_title = chart_title
 
         self.x_limit = x_limit
         self.y_limit = y_limit
@@ -125,7 +125,7 @@ class AnimateModel():
         self.ax.set_xlabel(self.x_label + " (in " + self.units + ")")
         self.ax.set_ylabel(self.y_label + " (in " + self.units + ")")
         self.ax.set_zlabel(self.z_label + " (in " + self.units + ")")
-        self.ax.set_title = self.chart_title
+        self.ax.set_title(self.chart_title)
 
         if self.x_limit is not None:
             self.ax.set_xlim3d(list(self.x_limit))
