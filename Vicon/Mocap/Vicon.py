@@ -293,8 +293,9 @@ class Vicon(MocapBase.MocapBase):
         self._joint_objs.clear()
         if data_dict is None:
             data_dict = self.data_dict
-
-        for key, value in data_dict["Joints"].items():
+        if data_dict.get('Joints') is None:
+            return
+        for key, value in data_dict.get("Joints").items():
             self._joint_objs[key] = Joint(name = key, angle_data = value)
 
         return
@@ -546,7 +547,8 @@ class Vicon(MocapBase.MocapBase):
         # according to the rules set by the user
         naninfo = {}
         for row in raw_data[start + 5:end - 1]:
-
+            if len(row) == 0: # Check to make sure something exists in row
+                continue
             frame = int(row[0])
 
             for key, value in data.items():
