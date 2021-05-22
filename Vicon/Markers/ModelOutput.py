@@ -50,6 +50,7 @@ from GaitCore import Core as core
 from GaitCore.Bio.Sara import Sara
 from GaitCore.Bio.Score import Score
 from GaitCore.Bio.Joint import Joint
+from GaitCore.Core.Angle import Angle
 
 from GaitCore.Bio.Leg import Leg
 from GaitCore.Bio.Arm import Arm
@@ -86,84 +87,135 @@ class ModelOutput():
         for key, value in self._raw_model_data.items():
             if 'score' in key:
                  self._joints.get(key.replace('_score', '')).score = Score(score_data = value)
-    
-    
 
-    # def create_body(self):
+    def make_right_leg(self, hip_joint,        knee_joint,         ankle_joint,
+                            hip_angle = None,  knee_angle = None,  ankle_angle=None,
+                            hip_force = None,  knee_force = None,  ankle_force = None,
+                            hip_moment = None, knee_moment = None, ankle_moment = None,
+                            hip_power = None,  knee_power = None,  ankle_power = None):
+        if hip_angle is not None: hip_joint._angle = Angle(hip_angle)
+        if hip_force is not None: hip_joint._force = hip_force
+        if hip_moment is not None: hip_joint._moment = hip_moment
+        if hip_power is not None: hip_joint._power = hip_power
+
+        if knee_angle is not None: knee_joint._angle = Angle(knee_angle)
+        if knee_force is not None: knee_joint._force = knee_force
+        if knee_moment is not None: knee_joint._moment = knee_moment
+        if knee_power is not None: knee_joint._power = knee_power
+
+        if ankle_angle is not None: ankle_joint._angle = Angle(ankle_angle)
+        if ankle_force is not None: ankle_joint._force = ankle_force
+        if ankle_moment is not None: ankle_joint._moment = ankle_moment
+        if ankle_power is not None: ankle_joint._power = ankle_power
         
-        # for side, joint in zip(("L", "R"), (left_joints, right_joints)):
-        #     for output in self.joint_names:
-        #         angle = None
-        #         power = None
-        #         moment = None
-        #         force = None
-        #         if side + output + "Angles" in data.keys():
-        #             angle = core.PointArray.PointArray(data[side + output + "Angles"]["X"]["data"],
-        #                                data[side + output + "Angles"]["Y"]["data"],
-        #                                data[side + output + "Angles"]["Z"]["data"])
-        #         if side + output + "Force" in data.keys():
-        #             force = core.PointArray.PointArray(data[side + output + "Force"]["X"]["data"],
-        #                                data[side + output + "Force"]["Y"]["data"],
-        #                                data[side + output + "Force"]["Z"]["data"])
-        #         if side + output + "Moment" in data.keys():
-        #             moment = core.PointArray.PointArray(data[side + output + "Moment"]["X"]["data"],
-        #                                 data[side + output + "Moment"]["Y"]["data"],
-        #                                 data[side + output + "Moment"]["Z"]["data"])
-        #         if side + output + "Power" in data.keys():
-        #             power = core.PointArray.PointArray(data[side + output + "Power"]["X"]["data"],
-        #                                data[side + output + "Power"]["Y"]["data"],
-        #                                data[side + output + "Power"]["Z"]["data"])
+        self._right_leg = Leg(hip_joint, knee_joint, ankle_joint)
 
-        #         joint[output] = Joint(angle, moment, power, force)
-        #         joint[output] = core.Newton.Newton(angle, force, moment, power)
+    def make_left_leg(self, hip_joint,        knee_joint,         ankle_joint,
+                            hip_angle = None,  knee_angle = None,  ankle_angle=None,
+                            hip_force = None,  knee_force = None,  ankle_force = None,
+                            hip_moment = None, knee_moment = None, ankle_moment = None,
+                            hip_power = None,  knee_power = None,  ankle_power = None):
+        if hip_angle is not None: hip_joint._angle = Angle(hip_angle)
+        if hip_force is not None: hip_joint._force = hip_force
+        if hip_moment is not None: hip_joint._moment = hip_moment
+        if hip_power is not None: hip_joint._power = hip_power
 
-        # self._left_leg = Leg(left_joints["Hip"], left_joints["Knee"], left_joints["Ankle"])
-        # self._right_leg = Leg(right_joints["Hip"], right_joints["Knee"], right_joints["Ankle"])
+        if knee_angle is not None: knee_joint._angle = Angle(knee_angle)
+        if knee_force is not None: knee_joint._force = knee_force
+        if knee_moment is not None: knee_joint._moment = knee_moment
+        if knee_power is not None: knee_joint._power = knee_power
 
-        # self._left_arm = Arm(left_joints["Shoulder"], left_joints["Elbow"], left_joints["Wrist"])
-        # self._right_arm = Arm(right_joints["Shoulder"], right_joints["Elbow"], right_joints["Wrist"])
+        if ankle_angle is not None: ankle_joint._angle = Angle(ankle_angle)
+        if ankle_force is not None: ankle_joint._force = ankle_force
+        if ankle_moment is not None: ankle_joint._moment = ankle_moment
+        if ankle_power is not None: ankle_joint._power = ankle_power
+        
+        self._left_leg = Leg(hip_joint, knee_joint, ankle_joint)
 
-        # self._left_trunk = Trunk(left_joints["Head"], left_joints["Spine"], left_joints["Thorax"], left_joints["Pelvis"])
-        # self._right_trunk = Trunk(right_joints["Head"], right_joints["Spine"], right_joints["Thorax"], right_joints["Pelvis"] )  
+    def make_right_arm(self, shoulder_joint,        elbow_joint,         wrist_joint,
+                            shoulder_angle = None,  elbow_angle = None,  wrist_angle=None,
+                            shoulder_force = None,  elbow_force = None,  wrist_force = None,
+                            shoulder_moment = None, elbow_moment = None, wrist_moment = None,
+                            shoulder_power = None,  elbow_power = None,  wrist_power = None):
+        if shoulder_angle is not None: shoulder_joint._angle = Angle(shoulder_angle)
+        if shoulder_force is not None: shoulder_joint._force = shoulder_force
+        if shoulder_moment is not None: shoulder_joint._moment = shoulder_moment
+        if shoulder_power is not None: shoulder_joint._power = shoulder_power
 
-    # def get_right_leg(self):
-    #     """
+        if elbow_angle is not None: elbow_joint._angle = Angle(elbow_angle)
+        if elbow_force is not None: elbow_joint._force = elbow_force
+        if elbow_moment is not None: elbow_joint._moment = elbow_moment
+        if elbow_power is not None: elbow_joint._power = elbow_power
 
-    #     :return:
-    #     """
-    #     return self._right_leg
+        if wrist_angle is not None: wrist_joint._angle = Angle(wrist_angle)
+        if wrist_force is not None: wrist_joint._force = wrist_force
+        if wrist_moment is not None: wrist_joint._moment = wrist_moment
+        if wrist_power is not None: wrist_joint._power = wrist_power
+        
+        self._right_arm = Arm(shoulder_joint, elbow_joint, wrist_joint)
 
-    # def get_left_leg(self):
-    #     """
+    def make_left_arm(self, shoulder_joint,        elbow_joint,         wrist_joint,
+                            shoulder_angle = None,  elbow_angle = None,  wrist_angle=None,
+                            shoulder_force = None,  elbow_force = None,  wrist_force = None,
+                            shoulder_moment = None, elbow_moment = None, wrist_moment = None,
+                            shoulder_power = None,  elbow_power = None,  wrist_power = None):
+        if shoulder_angle is not None: shoulder_joint._angle = Angle(shoulder_angle)
+        if shoulder_force is not None: shoulder_joint._force = shoulder_force
+        if shoulder_moment is not None: shoulder_joint._moment = shoulder_moment
+        if shoulder_power is not None: shoulder_joint._power = shoulder_power
 
-    #     :return:
-    #     """
-    #     return self._left_leg
+        if elbow_angle is not None: elbow_joint._angle = Angle(elbow_angle)
+        if elbow_force is not None: elbow_joint._force = elbow_force
+        if elbow_moment is not None: elbow_joint._moment = elbow_moment
+        if elbow_power is not None: elbow_joint._power = elbow_power
 
-    # def get_right_arm(self):
-    #     """
+        if wrist_angle is not None: wrist_joint._angle = Angle(wrist_angle)
+        if wrist_force is not None: wrist_joint._force = wrist_force
+        if wrist_moment is not None: wrist_joint._moment = wrist_moment
+        if wrist_power is not None: wrist_joint._power = wrist_power
+        
+        self._left_arm = Arm(shoulder_joint, elbow_joint, wrist_joint)
 
-    #     :return:
-    #     """
-    #     return self._right_arm
 
-    # def get_left_arm(self):
-    #     """
+    
+    def get_right_leg(self):
+        """
 
-    #     :return:
-    #     """
-    #     return self._left_arm
+        :return:
+        """
+        return self._right_leg
 
-    # def get_right_trunk(self):
-    #     """
+    def get_left_leg(self):
+        """
 
-    #     :return:
-    #     """
-    #     return self._right_trunk
+        :return:
+        """
+        return self._left_leg
 
-    # def get_left_trunk(self):
-    #     """
+    def get_right_arm(self):
+        """
 
-    #     :return:
-    #     """
-    #     return self._left_trunk
+        :return:
+        """
+        return self._right_arm
+
+    def get_left_arm(self):
+        """
+
+        :return:
+        """
+        return self._left_arm
+
+    def get_right_trunk(self):
+        """
+
+        :return:
+        """
+        return self._right_trunk
+
+    def get_left_trunk(self):
+        """
+
+        :return:
+        """
+        return self._left_trunk
