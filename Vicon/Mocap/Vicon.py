@@ -44,11 +44,14 @@
 # //==============================================================================
 import csv
 from typing import List, Any
-from ..Interpolation import Akmia
 import numpy as np
+from GaitCore.Bio.Joint import Joint
+from Vicon.Interpolation import Akmia
 from Vicon.Markers import ModelOutput as modeloutput
 from Vicon.Devices import EMG, IMU, Accel, ForcePlate
-from . import MocapBase
+from Vicon.Mocap import MocapBase
+
+
 class Vicon(MocapBase.MocapBase):
 
     def __init__(self, file_path, verbose=False, interpolate=True, maxnanstotal=-1, maxnansrow=-1, sanitize=True,inerpolation_method=Akmia.Akmia):
@@ -61,6 +64,7 @@ class Vicon(MocapBase.MocapBase):
         self._IMUs = {}
         self._accels = {}
 
+        self._joint_objs = {}
 
         self._nan_dict = {}
 
@@ -74,12 +78,16 @@ class Vicon(MocapBase.MocapBase):
 
         self.data_dict = self.open_file(self._file_path, verbose=self._verbose, interpolate=self._interpolate,
                                               maxnanstotal=self._maxanstotal, maxnansrow=self._maxnansrow, sanitize=self._sanitize)
+        # Make Joint objects and add them to the list
+        self._make_joint_objs()
+
         self._make_Accelerometers(verbose=self._verbose)
         self._make_EMGs(verbose=self._verbose)
         self._make_force_plates(verbose=self._verbose)
         self._make_IMUs(verbose=self._verbose)
         self._make_marker_trajs()
         self._make_model(verbose=self._verbose)
+
 
     @property
     def accels(self):
@@ -232,7 +240,7 @@ class Vicon(MocapBase.MocapBase):
         """
         return self.force_plate
 
-    def get_emg(self, index):
+    def get_emg_values(self, index):
         """
        Get the EMG values
        :param index: number of sensor
@@ -241,7 +249,7 @@ class Vicon(MocapBase.MocapBase):
         """
         return self._EMGs[index]
 
-    def get_emg(self):
+    def get_emg_keys(self):
         """
        Get the EMG keys
        :return: list of keys
@@ -279,13 +287,26 @@ class Vicon(MocapBase.MocapBase):
         """
         return self._T_EMGs
 
+    def _make_joint_objs(self, data_dict: dict = None):
+        """[summary]
+        """
+        self._joint_objs.clear()
+        if data_dict is None:
+            data_dict = self.data_dict
+        if data_dict.get('Joints') is None:
+            return
+        for key, value in data_dict.get("Joints").items():
+            self._joint_objs[key] = Joint(name = key, angle_data = value)
+
+        return
+
     def _make_model(self, verbose=False):
         """
         generates a model from the model outputs
         :return:
         """
         if "Model Outputs" in self.data_dict:
-            self._model_output = modeloutput.ModelOutput(self.data_dict["Model Outputs"])
+            self._model_output = modeloutput.ModelOutput(self.data_dict["Model Outputs"], joints = self._joint_objs)
             if verbose:
                 print("Model Outputs generated")
         elif verbose:
@@ -427,7 +448,7 @@ class Vicon(MocapBase.MocapBase):
         for name in fitlered_col:
             inx.append(raw_col.index(name))
 
-        inx.append(len(raw_col))
+        inx.append(len(raw_col) + 1)
         return fitlered_col, inx
 
     def _fix_col_names(self, names):
@@ -491,6 +512,7 @@ class Vicon(MocapBase.MocapBase):
         column_names = self._fix_col_names(raw_data[start + 2])
 
         # column_names = raw_data[start + 2]
+        # TODO: Don't think strings are itterable in Python
         remove_numbers = lambda str: ''.join([i for i in str if not i.isdigit()])
 
         axis = list(map(remove_numbers, raw_data[start + 3]))
@@ -525,7 +547,8 @@ class Vicon(MocapBase.MocapBase):
         # according to the rules set by the user
         naninfo = {}
         for row in raw_data[start + 5:end - 1]:
-
+            if len(row) == 0: # Check to make sure something exists in row
+                continue
             frame = int(row[0])
 
             for key, value in data.items():

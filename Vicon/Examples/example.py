@@ -44,7 +44,6 @@
 # //==============================================================================
 
 
-import Vicon
 import numpy as np
 import GaitCore.Core as core
 from Vicon.Mocap import Vicon
@@ -89,7 +88,7 @@ def animate(frame, x, y, z, centers=None, axis =None):
     axis_z = [(centers[frame][2] - axis[2] * 1000).item(0), (centers[frame][2]).item(0), (centers[frame][2] + axis[2] * 1000).item(0)]
 
     ax.plot(axis_x, axis_y, axis_z, 'b')
-
+    
 def get_right_knee(file, start, end):
     vicon = Vicon(file)
     markers = vicon.get_markers()
