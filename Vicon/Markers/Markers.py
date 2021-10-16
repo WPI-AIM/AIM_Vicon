@@ -1222,9 +1222,9 @@ def fit_to_plane(points):
     fit = (A.T * A).I * A.T * b
 
     errors = b - A * fit
-    residual = np.linalg.norm(errors)
-    fit = unit_vector(fit)
-    return fit, residual
+    residual =  np.linalg.norm(errors)
+    #fit = unit_vector(fit)
+    return np.asarray(fit), residual
 
 
 if __name__ == '__main__':
