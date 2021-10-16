@@ -101,14 +101,25 @@ class ModelOutput():
                 joint[output] = Joint(angle, moment, power, force)
                 #joint[output] = core.Newton.Newton(angle, force, moment, power)
 
-            self._left_leg = Leg(left_joints["Hip"], left_joints["Knee"], left_joints["Ankle"])
-            self._right_leg = Leg(right_joints["Hip"], right_joints["Knee"], right_joints["Ankle"])
+            if "Hip" in left_joints and "Knee" in left_joints and "Ankle" in left_joints :
+                self._left_leg = Leg(left_joints["Hip"], left_joints["Knee"], left_joints["Ankle"])
 
-            self._left_arm = Arm(left_joints["Shoulder"], left_joints["Elbow"], left_joints["Wrist"])
-            self._right_arm = Arm(right_joints["Shoulder"], right_joints["Elbow"], right_joints["Wrist"])
 
-            self._left_trunk = Trunk(left_joints["Head"], left_joints["Spine"], left_joints["Thorax"], left_joints["Pelvis"])
-            self._right_trunk = Trunk(right_joints["Head"], right_joints["Spine"], right_joints["Thorax"], right_joints["Pelvis"] )
+            if "Hip" in right_joints and "Knee" in right_joints and "Ankle" in right_joints :
+                self._right_leg = Leg(right_joints["Hip"], right_joints["Knee"], right_joints["Ankle"])
+
+            if "Shoulder" in left_joints and "Elbow" in left_joints and "Wrist" in left_joints :
+                self._left_arm = Arm(left_joints["Shoulder"], left_joints["Elbow"], left_joints["Wrist"])
+
+            if "Shoulder" in right_joints and "Elbow" in right_joints and "Wrist" in right_joints :
+                self._right_arm = Arm(right_joints["Shoulder"], right_joints["Elbow"], right_joints["Wrist"])
+
+            if "Head" in left_joints and "Spine" in left_joints and "Thorax" in left_joints and "Pelvis" in left_joints :
+                self._left_trunk = Trunk(left_joints["Head"], left_joints["Spine"], left_joints["Thorax"], left_joints["Pelvis"])
+
+            if "Head" in right_joints and "Spine" in right_joints and "Thorax" in right_joints and "Pelvis" in right_joints :
+                self._right_trunk = Trunk(right_joints["Head"], right_joints["Spine"], right_joints["Thorax"], right_joints["Pelvis"] )
+
 
     def _set_sara(self):
         """
@@ -118,9 +129,9 @@ class ModelOutput():
 
         for key, value in self._raw_model_data.items():
             if 'sara' in key:
-                if self._joints.get(key.replace('_sara', '')) == None:
-                  self._joints[key.replace('_sara','')]  = Joint(name = key)
-                  self._joints.get(key.replace('_sara', '')).sara = Sara(sara_data = value)
+                # if self._joints.get(key.replace('_sara', '')) == None:
+                #   self._joints[key.replace('_sara','')]  = Joint(name = key)
+                self._joints.get(key.replace('_sara', '')).sara = Sara(sara_data = value)
                 #
     def _set_score(self):
         """
@@ -130,9 +141,9 @@ class ModelOutput():
 
         for key, value in self._raw_model_data.items():
             if 'score' in key:
-                if self._joints.get(key.replace('_score', '')) == None:
-                    self._joints[key.replace('_score', '')]  = Joint(name = key)
-                    self._joints.get(key.replace('_score', '')).score = Score(score_data= value)
+                # if self._joints.get(key.replace('_score', '')) == None:
+                #     self._joints[key.replace('_score', '')]  = Joint(name = key)
+            self._joints.get(key.replace('_score', '')).score = Score(score_data= value)
 
     def make_right_leg(self, hip_joint,        knee_joint,         ankle_joint,
                             hip_angle = None,  knee_angle = None,  ankle_angle=None,
