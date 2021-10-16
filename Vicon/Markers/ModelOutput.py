@@ -68,6 +68,48 @@ class ModelOutput():
         self._set_sara()
         self._set_score()
 
+
+
+    def _make_models(self):
+
+        joint_names = ["Hip", "Knee", "Ankle", "Head", "Thorax", "Neck", "Shoulder", "Pelvis", "Spine", "Wrist", "Elbow"]
+        left_joints = {}
+        right_joints = {}
+        for side, joint in zip(("L", "R"), (left_joints, right_joints)):
+            for output in joint_names:
+                angle = None
+                power = None
+                moment = None
+                force = None
+                if side + output + "Angles" in self._raw_model_data.keys():
+                    angle = core.PointArray.PointArray(self._raw_model_data[side + output + "Angles"]["X"]["data"],
+                                                       self._raw_model_data[side + output + "Angles"]["Y"]["data"],
+                                                       self._raw_model_data[side + output + "Angles"]["Z"]["data"])
+                if side + output + "Force" in self._raw_model_data.keys():
+                    force = core.PointArray.PointArray(self._raw_model_data[side + output + "Force"]["X"]["data"],
+                                                       self._raw_model_data[side + output + "Force"]["Y"]["data"],
+                                                       self._raw_model_data[side + output + "Force"]["Z"]["data"])
+                if side + output + "Moment" in self._raw_model_data.keys():
+                    moment = core.PointArray.PointArray(self._raw_model_data[side + output + "Moment"]["X"]["data"],
+                                                        self._raw_model_dataata[side + output + "Moment"]["Y"]["data"],
+                                                        self._raw_model_data[side + output + "Moment"]["Z"]["data"])
+                if side + output + "Power" in self._raw_model_data.keys():
+                    power = core.PointArray.PointArray(self._raw_model_data[side + output + "Power"]["X"]["data"],
+                                                       self._raw_model_data[side + output + "Power"]["Y"]["data"],
+                                                       self._raw_model_data[side + output + "Power"]["Z"]["data"])
+
+                joint[output] = Joint(angle, moment, power, force)
+                #joint[output] = core.Newton.Newton(angle, force, moment, power)
+
+            self._left_leg = Leg(left_joints["Hip"], left_joints["Knee"], left_joints["Ankle"])
+            self._right_leg = Leg(right_joints["Hip"], right_joints["Knee"], right_joints["Ankle"])
+
+            self._left_arm = Arm(left_joints["Shoulder"], left_joints["Elbow"], left_joints["Wrist"])
+            self._right_arm = Arm(right_joints["Shoulder"], right_joints["Elbow"], right_joints["Wrist"])
+
+            self._left_trunk = Trunk(left_joints["Head"], left_joints["Spine"], left_joints["Thorax"], left_joints["Pelvis"])
+            self._right_trunk = Trunk(right_joints["Head"], right_joints["Spine"], right_joints["Thorax"], right_joints["Pelvis"] )
+
     def _set_sara(self):
         """
         Sets SARA for all joints with available data
@@ -76,8 +118,10 @@ class ModelOutput():
 
         for key, value in self._raw_model_data.items():
             if 'sara' in key:
-                self._joints.get(key.replace('_sara', '')).sara = Sara(sara_data = value)
-            
+                if self._joints.get(key.replace('_sara', '')) == None:
+                  self._joints[key.replace('_sara','')]  = Joint(name = key)
+                  self._joints.get(key.replace('_sara', '')).sara = Sara(sara_data = value)
+                #
     def _set_score(self):
         """
         Sets SCoRE for all joints with available data
@@ -86,7 +130,9 @@ class ModelOutput():
 
         for key, value in self._raw_model_data.items():
             if 'score' in key:
-                 self._joints.get(key.replace('_score', '')).score = Score(score_data = value)
+                if self._joints.get(key.replace('_score', '')) == None:
+                    self._joints[key.replace('_score', '')]  = Joint(name = key)
+                    self._joints.get(key.replace('_score', '')).score = Score(score_data= value)
 
     def make_right_leg(self, hip_joint,        knee_joint,         ankle_joint,
                             hip_angle = None,  knee_angle = None,  ankle_angle=None,
@@ -219,3 +265,9 @@ class ModelOutput():
         :return:
         """
         return self._left_trunk
+
+    def get_joint(self, name):
+        return self._joints.get(name)
+
+    def get_joint_names(self):
+        return self._joints.keys()
