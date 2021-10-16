@@ -143,7 +143,7 @@ class ModelOutput():
             if 'score' in key:
                 # if self._joints.get(key.replace('_score', '')) == None:
                 #     self._joints[key.replace('_score', '')]  = Joint(name = key)
-            self._joints.get(key.replace('_score', '')).score = Score(score_data= value)
+                self._joints.get(key.replace('_score', '')).score = Score(score_data= value)
 
     def make_right_leg(self, hip_joint,        knee_joint,         ankle_joint,
                             hip_angle = None,  knee_angle = None,  ankle_angle=None,
