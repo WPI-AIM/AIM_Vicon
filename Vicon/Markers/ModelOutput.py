@@ -91,7 +91,7 @@ class ModelOutput():
                                                        self._raw_model_data[side + output + "Force"]["Z"]["data"])
                 if side + output + "Moment" in self._raw_model_data.keys():
                     moment = core.PointArray.PointArray(self._raw_model_data[side + output + "Moment"]["X"]["data"],
-                                                        self._raw_model_dataata[side + output + "Moment"]["Y"]["data"],
+                                                        self._raw_model_data[side + output + "Moment"]["Y"]["data"],
                                                         self._raw_model_data[side + output + "Moment"]["Z"]["data"])
                 if side + output + "Power" in self._raw_model_data.keys():
                     power = core.PointArray.PointArray(self._raw_model_data[side + output + "Power"]["X"]["data"],
