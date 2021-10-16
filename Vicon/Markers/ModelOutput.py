@@ -67,6 +67,7 @@ class ModelOutput():
 
         self._set_sara()
         self._set_score()
+        self._make_models()
 
 
 
