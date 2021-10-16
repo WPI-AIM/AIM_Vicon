@@ -136,6 +136,7 @@ class Markers(object):
         """
         return self._filtered_markers.keys()
 
+
     def make_markers(self):
         """
         Convert the dictioanry into something a that can be easy read
@@ -152,8 +153,8 @@ class Markers(object):
         for key_name, value_name in self._data_dict.items():
             fixed_name = key_name[1 + key_name.find(":"):]
             self._marker_names.append(fixed_name)
-            self._raw_markers[fixed_name] = []
-            self._filtered_markers[fixed_name] = []
+            self._raw_markers[fixed_name] = core.PointArray.init_point_array()
+            self._filtered_markers[fixed_name] = core.PointArray.init_point_array()
 
             # This removes some of the values that are not very useful
             # if value_name.keys()[0] == "Magnitude( X )" or value_name.keys()[0] == "Count":
@@ -698,11 +699,23 @@ class Markers(object):
                 for i in range(l):
                     self._joints[name].append([float(n) for n in next(reader)])
 
+    def batch_global_point_to_frame_by_name(self, frame_name, point_name):
+        """
+
+        :param frame_name: name of frame
+        :param point_name: name of point
+        :return: Point array
+        """
+        my_frames = self.get_frame(frame_name)
+        my_marker = self.get_marker(point_name)
+        new_points = core.PointArray.init_point_array()
+        for point, frame in zip( my_marker, my_frames):
+            p = global_point_to_frame(frame, point)
+            new_points.append(p)
+        return new_points
 
 def avg(n):
     return sum(n)/len(n)
-
-
 
 def transform_markers(transforms, markers):
     """
