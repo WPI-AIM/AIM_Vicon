@@ -153,8 +153,8 @@ class Markers(object):
         for key_name, value_name in self._data_dict.items():
             fixed_name = key_name[1 + key_name.find(":"):]
             self._marker_names.append(fixed_name)
-            self._raw_markers[fixed_name] = core.PointArray.init_point_array()
-            self._filtered_markers[fixed_name] = core.PointArray.init_point_array()
+            self._raw_markers[fixed_name] = core.PointArray.PointArray.init_point_array()
+            self._filtered_markers[fixed_name] = core.PointArray.PointArray.init_point_array()
 
             # This removes some of the values that are not very useful
             # if value_name.keys()[0] == "Magnitude( X )" or value_name.keys()[0] == "Count":
