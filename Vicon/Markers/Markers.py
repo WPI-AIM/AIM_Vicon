@@ -509,7 +509,7 @@ class Markers(object):
         fps = 10  # Frame per sec
         keys = self._filtered_markers.keys()
         nfr = len(self._filtered_markers[list(keys)[0]])  # Number of frames
-        root0z0 = self._filtered_markers[centerPoint][0].z
+
 
         for frame in range(nfr):
             x = []
@@ -524,6 +524,7 @@ class Markers(object):
                         z += [point.z]
                     else:
                         root0 = self._filtered_markers[centerPoint][frame]
+                        root0z0 = self._filtered_markers[centerPoint][0].z
                         x += [point.x - root0.x]
                         y += [point.y - root0.y]
                         z += [point.z - root0.z + root0z0]
@@ -540,10 +541,10 @@ class Markers(object):
                     if frame >= len(joint):
                         f = len(joint) - 1
 
-                    if not center:
-                        x.append(joint[frame][0])
-                        y.append(joint[frame][1])
-                        z.append(joint[frame][2])
+                    if True: #not center:
+                        x.append(joint[frame].x)
+                        y.append(joint[frame].y)
+                        z.append(joint[frame].z)
                     else:
                         root0 = self._filtered_markers[centerPoint][frame]
                         x.append(joint[frame][0] - root0.x)
