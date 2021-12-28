@@ -57,23 +57,23 @@ from GaitCore.Bio.Arm import Arm
 from GaitCore.Bio.Trunk import Trunk
 from GaitCore.Bio.Joint import Joint
 
+
 class ModelOutput():
 
     def __init__(self, model_data: dict = {}, verbose=False, joints: dict = None):
 
         # Create class-wide variables
-        self._raw_model_data = model_data # Model data should already be split up in Vicon.py
+        self._raw_model_data = model_data  # Model data should already be split up in Vicon.py
         self._joints = joints
 
         self._set_sara()
         self._set_score()
         self._make_models()
 
-
-
     def _make_models(self):
 
-        joint_names = ["Hip", "Knee", "Ankle", "Head", "Thorax", "Neck", "Shoulder", "Pelvis", "Spine", "Wrist", "Elbow"]
+        joint_names = ["Hip", "Knee", "Ankle", "Head", "Thorax", "Neck", "Shoulder", "Pelvis", "Spine", "Wrist",
+                       "Elbow"]
         left_joints = {}
         right_joints = {}
         for side, joint in zip(("L", "R"), (left_joints, right_joints)):
@@ -102,27 +102,27 @@ class ModelOutput():
                 self._joints[side + output] = Joint(angle, moment, power, force)
                 joint[output] = Joint(name=side + output, angle_data=angle, moment=moment, power=power, force=force)
                 self._joints[side + output] = joint[output]
-                #joint[output] = core.Newton.Newton(angle, force, moment, power)
+                # joint[output] = core.Newton.Newton(angle, force, moment, power)
 
-        if "Hip" in left_joints and "Knee" in left_joints and "Ankle" in left_joints :
+        if "Hip" in left_joints and "Knee" in left_joints and "Ankle" in left_joints:
             self._left_leg = Leg(left_joints["Hip"], left_joints["Knee"], left_joints["Ankle"])
 
-
-        if "Hip" in right_joints and "Knee" in right_joints and "Ankle" in right_joints :
+        if "Hip" in right_joints and "Knee" in right_joints and "Ankle" in right_joints:
             self._right_leg = Leg(right_joints["Hip"], right_joints["Knee"], right_joints["Ankle"])
 
-        if "Shoulder" in left_joints and "Elbow" in left_joints and "Wrist" in left_joints :
+        if "Shoulder" in left_joints and "Elbow" in left_joints and "Wrist" in left_joints:
             self._left_arm = Arm(left_joints["Shoulder"], left_joints["Elbow"], left_joints["Wrist"])
 
-        if "Shoulder" in right_joints and "Elbow" in right_joints and "Wrist" in right_joints :
+        if "Shoulder" in right_joints and "Elbow" in right_joints and "Wrist" in right_joints:
             self._right_arm = Arm(right_joints["Shoulder"], right_joints["Elbow"], right_joints["Wrist"])
 
-        if "Head" in left_joints and "Spine" in left_joints and "Thorax" in left_joints and "Pelvis" in left_joints :
-            self._left_trunk = Trunk(left_joints["Head"], left_joints["Spine"], left_joints["Thorax"], left_joints["Pelvis"])
+        if "Head" in left_joints and "Spine" in left_joints and "Thorax" in left_joints and "Pelvis" in left_joints:
+            self._left_trunk = Trunk(left_joints["Head"], left_joints["Spine"], left_joints["Thorax"],
+                                     left_joints["Pelvis"])
 
-        if "Head" in right_joints and "Spine" in right_joints and "Thorax" in right_joints and "Pelvis" in right_joints :
-            self._right_trunk = Trunk(right_joints["Head"], right_joints["Spine"], right_joints["Thorax"], right_joints["Pelvis"] )
-
+        if "Head" in right_joints and "Spine" in right_joints and "Thorax" in right_joints and "Pelvis" in right_joints:
+            self._right_trunk = Trunk(right_joints["Head"], right_joints["Spine"], right_joints["Thorax"],
+                                      right_joints["Pelvis"])
 
     def _set_sara(self):
         """
@@ -134,8 +134,12 @@ class ModelOutput():
             if 'sara' in key:
                 # if self._joints.get(key.replace('_sara', '')) == None:
                 #   self._joints[key.replace('_sara','')]  = Joint(name = key)
-                self._joints.get(key.replace('_sara', '')).sara = Sara(sara_data = value)
-                #
+                renamed_key = key.replace('_sara', '')
+
+                if renamed_key not in self._joints:  # if the joint is named something different this will added to the list
+                    self._joints[renamed_key] = Joint(name=renamed_key)
+                self._joints.get(key.replace('_sara', '')).sara = Sara(sara_data=value)
+
     def _set_score(self):
         """
         Sets SCoRE for all joints with available data
@@ -146,13 +150,18 @@ class ModelOutput():
             if 'score' in key:
                 # if self._joints.get(key.replace('_score', '')) == None:
                 #     self._joints[key.replace('_score', '')]  = Joint(name = key)
-                self._joints.get(key.replace('_score', '')).score = Score(score_data= value)
+                renamed_key = key.replace('_score', '')
 
-    def make_right_leg(self, hip_joint,        knee_joint,         ankle_joint,
-                            hip_angle = None,  knee_angle = None,  ankle_angle=None,
-                            hip_force = None,  knee_force = None,  ankle_force = None,
-                            hip_moment = None, knee_moment = None, ankle_moment = None,
-                            hip_power = None,  knee_power = None,  ankle_power = None):
+                if renamed_key not in self._joints:  # if the joint is named something different this will added to the list
+                    self._joints[renamed_key] = Joint(name=renamed_key)
+
+                self._joints.get(key.replace('_score', '')).score = Score(score_data=value)
+
+    def make_right_leg(self, hip_joint, knee_joint, ankle_joint,
+                       hip_angle=None, knee_angle=None, ankle_angle=None,
+                       hip_force=None, knee_force=None, ankle_force=None,
+                       hip_moment=None, knee_moment=None, ankle_moment=None,
+                       hip_power=None, knee_power=None, ankle_power=None):
         if hip_angle is not None: hip_joint._angle = Angle(hip_angle)
         if hip_force is not None: hip_joint._force = hip_force
         if hip_moment is not None: hip_joint._moment = hip_moment
@@ -167,14 +176,14 @@ class ModelOutput():
         if ankle_force is not None: ankle_joint._force = ankle_force
         if ankle_moment is not None: ankle_joint._moment = ankle_moment
         if ankle_power is not None: ankle_joint._power = ankle_power
-        
+
         self._right_leg = Leg(hip_joint, knee_joint, ankle_joint)
 
-    def make_left_leg(self, hip_joint,        knee_joint,         ankle_joint,
-                            hip_angle = None,  knee_angle = None,  ankle_angle=None,
-                            hip_force = None,  knee_force = None,  ankle_force = None,
-                            hip_moment = None, knee_moment = None, ankle_moment = None,
-                            hip_power = None,  knee_power = None,  ankle_power = None):
+    def make_left_leg(self, hip_joint, knee_joint, ankle_joint,
+                      hip_angle=None, knee_angle=None, ankle_angle=None,
+                      hip_force=None, knee_force=None, ankle_force=None,
+                      hip_moment=None, knee_moment=None, ankle_moment=None,
+                      hip_power=None, knee_power=None, ankle_power=None):
         if hip_angle is not None: hip_joint._angle = Angle(hip_angle)
         if hip_force is not None: hip_joint._force = hip_force
         if hip_moment is not None: hip_joint._moment = hip_moment
@@ -189,14 +198,14 @@ class ModelOutput():
         if ankle_force is not None: ankle_joint._force = ankle_force
         if ankle_moment is not None: ankle_joint._moment = ankle_moment
         if ankle_power is not None: ankle_joint._power = ankle_power
-        
+
         self._left_leg = Leg(hip_joint, knee_joint, ankle_joint)
 
-    def make_right_arm(self, shoulder_joint,        elbow_joint,         wrist_joint,
-                            shoulder_angle = None,  elbow_angle = None,  wrist_angle=None,
-                            shoulder_force = None,  elbow_force = None,  wrist_force = None,
-                            shoulder_moment = None, elbow_moment = None, wrist_moment = None,
-                            shoulder_power = None,  elbow_power = None,  wrist_power = None):
+    def make_right_arm(self, shoulder_joint, elbow_joint, wrist_joint,
+                       shoulder_angle=None, elbow_angle=None, wrist_angle=None,
+                       shoulder_force=None, elbow_force=None, wrist_force=None,
+                       shoulder_moment=None, elbow_moment=None, wrist_moment=None,
+                       shoulder_power=None, elbow_power=None, wrist_power=None):
         if shoulder_angle is not None: shoulder_joint._angle = Angle(shoulder_angle)
         if shoulder_force is not None: shoulder_joint._force = shoulder_force
         if shoulder_moment is not None: shoulder_joint._moment = shoulder_moment
@@ -211,14 +220,14 @@ class ModelOutput():
         if wrist_force is not None: wrist_joint._force = wrist_force
         if wrist_moment is not None: wrist_joint._moment = wrist_moment
         if wrist_power is not None: wrist_joint._power = wrist_power
-        
+
         self._right_arm = Arm(shoulder_joint, elbow_joint, wrist_joint)
 
-    def make_left_arm(self, shoulder_joint,        elbow_joint,         wrist_joint,
-                            shoulder_angle = None,  elbow_angle = None,  wrist_angle=None,
-                            shoulder_force = None,  elbow_force = None,  wrist_force = None,
-                            shoulder_moment = None, elbow_moment = None, wrist_moment = None,
-                            shoulder_power = None,  elbow_power = None,  wrist_power = None):
+    def make_left_arm(self, shoulder_joint, elbow_joint, wrist_joint,
+                      shoulder_angle=None, elbow_angle=None, wrist_angle=None,
+                      shoulder_force=None, elbow_force=None, wrist_force=None,
+                      shoulder_moment=None, elbow_moment=None, wrist_moment=None,
+                      shoulder_power=None, elbow_power=None, wrist_power=None):
         if shoulder_angle is not None: shoulder_joint._angle = Angle(shoulder_angle)
         if shoulder_force is not None: shoulder_joint._force = shoulder_force
         if shoulder_moment is not None: shoulder_joint._moment = shoulder_moment
@@ -233,11 +242,9 @@ class ModelOutput():
         if wrist_force is not None: wrist_joint._force = wrist_force
         if wrist_moment is not None: wrist_joint._moment = wrist_moment
         if wrist_power is not None: wrist_joint._power = wrist_power
-        
+
         self._left_arm = Arm(shoulder_joint, elbow_joint, wrist_joint)
 
-
-    
     def get_right_leg(self):
         """
 
